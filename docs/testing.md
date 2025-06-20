@@ -1,5 +1,9 @@
 # Testing & QA Plan
 
+> **See also:** [Requirements](requirements.md) | [Planning](planning.md)
+
+> **See also:** [Requirements](docs/requirements.md) | [Planning](docs/planning.md)
+
 This document outlines how features will be tested in the farming game.
 
 ## Manual Testing

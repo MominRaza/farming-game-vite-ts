@@ -1,5 +1,9 @@
 # Glossary
 
+> **See also:** [Requirements](requirements.md) | [Planning](planning.md)
+
+> **See also:** [Requirements](docs/requirements.md) | [Planning](docs/planning.md)
+
 This document defines key terms used in the farming game documentation and code.
 
 - **Plot**: A single square of land where crops can be planted.

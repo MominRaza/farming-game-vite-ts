@@ -1,4 +1,3 @@
-
 # Crops and Seeds
 
 > **See also:** [Requirements](requirements.md) | [Development Roadmap](planning.md) | [Tools](tools.md) | [Feature: Planting](feature-planting.md) | [Feature: Shop](feature-shop.md)

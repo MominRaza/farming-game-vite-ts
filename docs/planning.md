@@ -1,6 +1,3 @@
-
-
-
 # Farming Game Detailed Development Plan
 
 > **See also:** [Requirements](requirements.md) | [Crops & Seeds](crops.md) | [Tools](tools.md) | [Game State](game-state.md) | [UI Mockups](ui-mockups.md) | [User Flow](user-flow.md) | [Save & Load](save-load.md) | [Testing](testing.md) | [Glossary](glossary.md) | [Feature: Planting](feature-planting.md) | [Feature: Shop](feature-shop.md)

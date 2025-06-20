@@ -1,4 +1,3 @@
-
 # Planting Feature Breakdown
 
 > **See also:** [Requirements](requirements.md) | [Development Roadmap](planning.md) | [Crops & Seeds](crops.md) | [Tools](tools.md) | [Feature: Shop](feature-shop.md)

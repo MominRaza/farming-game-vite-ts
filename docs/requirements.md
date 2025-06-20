@@ -1,4 +1,3 @@
-
 # Farming Game Requirements Document
 
 > **See also:** [Development Roadmap](planning.md) | [Crops & Seeds](crops.md) | [Tools](tools.md) | [Feature: Planting](feature-planting.md) | [Feature: Shop](feature-shop.md)
