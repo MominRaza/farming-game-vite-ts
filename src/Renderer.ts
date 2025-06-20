@@ -65,7 +65,10 @@ const TILE_COLORS = {
     [TileSystem.TileType.DIRT]: '#9b7653',
     [TileSystem.TileType.ROAD]: '#a9a9a9',
     [TileSystem.TileType.LOCKED]: '#2c2c2c',
-    [TileSystem.TileType.HOME]: '#8B4513'
+    [TileSystem.TileType.HOME]: '#8B4513',
+    [TileSystem.TileType.CARROT_SEEDS]: '#f4a460',
+    [TileSystem.TileType.WHEAT_SEEDS]: '#daa520',
+    [TileSystem.TileType.TOMATO_SEEDS]: '#ff6b6b'
 };
 
 const TILE_BORDER_COLORS = {
@@ -73,7 +76,10 @@ const TILE_BORDER_COLORS = {
     [TileSystem.TileType.DIRT]: '#876543',
     [TileSystem.TileType.ROAD]: '#888888',
     [TileSystem.TileType.LOCKED]: '#444444',
-    [TileSystem.TileType.HOME]: '#654321'
+    [TileSystem.TileType.HOME]: '#654321',
+    [TileSystem.TileType.CARROT_SEEDS]: '#cd853f',
+    [TileSystem.TileType.WHEAT_SEEDS]: '#b8860b',
+    [TileSystem.TileType.TOMATO_SEEDS]: '#dc143c'
 };
 
 // Public render function that marks for redraw

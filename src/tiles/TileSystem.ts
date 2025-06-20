@@ -8,6 +8,10 @@ export const TileType = {
     FENCE: 'fence',
     LOCKED: 'locked',
     HOME: 'home',
+    // Crop types
+    CARROT_SEEDS: 'carrot_seeds',
+    WHEAT_SEEDS: 'wheat_seeds',
+    TOMATO_SEEDS: 'tomato_seeds',
     // Add more types here as the game expands
 } as const;
 
