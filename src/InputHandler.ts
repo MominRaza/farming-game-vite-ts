@@ -1,5 +1,5 @@
 import { gameState } from './GameState';
-import { render, screenToTileCoords, isOverLockIcon } from './Renderer';
+import { render, screenToTileCoords, isOverLockIcon } from './rendering';
 import * as TileSystem from './tiles/TileSystem';
 import { applyToolToTile } from './ToolsUI';
 

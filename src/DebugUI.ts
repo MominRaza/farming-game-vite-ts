@@ -1,6 +1,6 @@
 import * as TileSystem from './tiles/TileSystem';
 import { gameState, TILE_SIZE } from './GameState';
-import { render } from './Renderer';
+import { render } from './rendering';
 
 // Add a simple debug UI to show coordinates and scale
 export function setupDebugUI(): void {

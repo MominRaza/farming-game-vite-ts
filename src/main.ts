@@ -1,6 +1,6 @@
 import './style.css';
 import { centerView, gameState } from './GameState';
-import { render, initCanvas, getCanvas } from './Renderer';
+import { render, initCanvas, getCanvas, startRenderLoop } from './rendering';
 import { setupInputHandlers } from './InputHandler';
 import { setupDebugUI } from './DebugUI';
 import { setupToolsUI } from './ToolsUI';
@@ -22,6 +22,9 @@ function initGame(): void {
 
     // Setup input handlers for interaction
     setupInputHandlers(canvas);
+
+    // Start the render loop
+    startRenderLoop();
 
     // Render the initial state
     render();
