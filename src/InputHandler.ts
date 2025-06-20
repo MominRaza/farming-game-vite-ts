@@ -1,6 +1,6 @@
 import { gameState } from './GameState';
 import { render, screenToTileCoords, isOverLockIcon } from './rendering';
-import * as TileSystem from './tiles/TileSystem';
+import * as TileSystem from './tiles';
 import { applyToolToTile } from './ToolsUI';
 
 // Event handlers for mouse dragging

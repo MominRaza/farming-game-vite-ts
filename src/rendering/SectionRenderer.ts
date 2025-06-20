@@ -1,6 +1,6 @@
 import { getCanvas, getContext } from './Canvas';
 import { gameState, TILE_SIZE } from '../GameState';
-import * as TileSystem from '../tiles/TileSystem';
+import * as TileSystem from '../tiles';
 
 let cachedScaledTileSize = TILE_SIZE;
 

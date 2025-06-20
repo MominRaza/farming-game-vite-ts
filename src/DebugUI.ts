@@ -1,4 +1,4 @@
-import * as TileSystem from './tiles/TileSystem';
+import * as TileSystem from './tiles';
 import { gameState, TILE_SIZE } from './GameState';
 import { render } from './rendering';
 
@@ -92,18 +92,16 @@ export function setupDebugUI(): void {
             updateSectionStats();
             console.log('Unlocked all sections');
         });
-    }
-
-    // Update debug info on mouse move
+    }    // Update debug info on mouse move
     window.addEventListener('mousemove', (e) => {
         const { x, y } = TileSystem.screenToGrid(
             e.clientX,
             e.clientY,
-            gameState.offsetX,
-            gameState.offsetY,
+            TILE_SIZE,
             gameState.scale,
-            TILE_SIZE
-        ); if (TileSystem.isInBounds(gameState.grid, x, y)) {
+            gameState.offsetX,
+            gameState.offsetY
+        ); if (x >= 0 && x < gameState.grid.width && y >= 0 && y < gameState.grid.height) {
             const { sectionX, sectionY } = TileSystem.getTileSectionCoords(x, y);
             const section = TileSystem.getSection(gameState.grid, sectionX, sectionY);
             const isAccessible = TileSystem.isTileAccessible(gameState.grid, x, y);

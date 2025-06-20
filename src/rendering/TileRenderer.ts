@@ -1,6 +1,6 @@
 import { getContext } from './Canvas';
 import { TILE_COLORS, TILE_BORDER_COLORS } from './RenderConstants';
-import * as TileSystem from '../tiles/TileSystem';
+import * as TileSystem from '../tiles';
 
 // Draw a home structure at specified position (for 2x2 home tiles)
 export function drawHome(startX: number, startY: number, tileSize: number): void {

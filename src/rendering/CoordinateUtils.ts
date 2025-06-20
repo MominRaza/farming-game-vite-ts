@@ -1,5 +1,5 @@
 import { gameState, TILE_SIZE } from '../GameState';
-import * as TileSystem from '../tiles/TileSystem';
+import * as TileSystem from '../tiles';
 
 export function screenToTileCoords(screenX: number, screenY: number): { x: number, y: number } {
     const x = Math.floor((screenX - gameState.offsetX) / (TILE_SIZE * gameState.scale));

@@ -1,4 +1,4 @@
-import * as TileSystem from './tiles/TileSystem';
+import * as TileSystem from './tiles';
 import { gameState } from './GameState';
 
 // Tool types that players can use

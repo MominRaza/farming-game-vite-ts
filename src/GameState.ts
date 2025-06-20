@@ -2,7 +2,7 @@
 export const GRID_SIZE = 60; // 60x60 grid
 export const TILE_SIZE = 64; // Size of each tile in pixels (doubled for better visual detail)
 
-import * as TileSystem from './tiles/TileSystem';
+import * as TileSystem from './tiles';
 
 // Game state interface
 export interface GameState {
