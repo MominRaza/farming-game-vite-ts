@@ -64,14 +64,16 @@ const TILE_COLORS = {
     [TileSystem.TileType.GRASS]: '#7ec850',
     [TileSystem.TileType.DIRT]: '#9b7653',
     [TileSystem.TileType.ROAD]: '#a9a9a9',
-    [TileSystem.TileType.LOCKED]: '#2c2c2c'
+    [TileSystem.TileType.LOCKED]: '#2c2c2c',
+    [TileSystem.TileType.HOME]: '#8B4513'
 };
 
 const TILE_BORDER_COLORS = {
     [TileSystem.TileType.GRASS]: '#6db43c',
     [TileSystem.TileType.DIRT]: '#876543',
     [TileSystem.TileType.ROAD]: '#888888',
-    [TileSystem.TileType.LOCKED]: '#444444'
+    [TileSystem.TileType.LOCKED]: '#444444',
+    [TileSystem.TileType.HOME]: '#654321'
 };
 
 // Public render function that marks for redraw
@@ -105,16 +107,35 @@ function actualRender(): void {
     const startY = Math.floor(-gameState.offsetY / cachedScaledTileSize);
     const endX = startX + Math.ceil(viewportWidth / cachedScaledTileSize) + 1;
     const endY = startY + Math.ceil(viewportHeight / cachedScaledTileSize) + 1;    // Only render tiles that are in the visible range and within grid bounds
+    // Track if we've already drawn the home to avoid drawing it multiple times
+    const homeBounds = TileSystem.getHomeBounds();
+    let homeDrawn = false;
+
     for (let x = Math.max(0, startX); x < Math.min(gameState.grid.width, endX); x++) {
         for (let y = Math.max(0, startY); y < Math.min(gameState.grid.height, endY); y++) {
             const tile = TileSystem.getTile(gameState.grid, x, y);
 
             if (tile) {
                 const tileX = x * cachedScaledTileSize + gameState.offsetX;
-                const tileY = y * cachedScaledTileSize + gameState.offsetY;                // Fill tile background (handle fence type gracefully by treating as grass)
+                const tileY = y * cachedScaledTileSize + gameState.offsetY;
+
+                // Special handling for home tiles
+                if (tile.type === TileSystem.TileType.HOME) {
+                    // Only draw the home once for the top-left tile of the 2x2 home
+                    if (!homeDrawn && x === homeBounds.startX && y === homeBounds.startY) {
+                        drawHome(tileX, tileY, cachedScaledTileSize);
+                        homeDrawn = true;
+                    }
+                    // Skip individual tile rendering for home tiles since we draw the whole home
+                    continue;
+                }
+
+                // Fill tile background (handle fence type gracefully by treating as grass)
                 const tileColor = (TILE_COLORS as any)[tile.type] || TILE_COLORS[TileSystem.TileType.GRASS];
                 ctx.fillStyle = tileColor;
-                ctx.fillRect(tileX, tileY, cachedScaledTileSize, cachedScaledTileSize);                // Draw tile border (handle fence type gracefully by treating as grass)
+                ctx.fillRect(tileX, tileY, cachedScaledTileSize, cachedScaledTileSize);
+
+                // Draw tile border (handle fence type gracefully by treating as grass)
                 const borderColor = (TILE_BORDER_COLORS as any)[tile.type] || TILE_BORDER_COLORS[TileSystem.TileType.GRASS];
                 ctx.strokeStyle = borderColor;
                 ctx.lineWidth = 1;
@@ -271,4 +292,89 @@ export function isOverLockIcon(screenX: number, screenY: number): { sectionX: nu
     const distance = Math.sqrt(Math.pow(screenX - sectionCenterX, 2) + Math.pow(screenY - sectionCenterY, 2));
 
     return distance <= lockIconRadius ? { sectionX, sectionY } : null;
+}
+
+// Draw a home structure at specified position (for 2x2 home tiles)
+function drawHome(startX: number, startY: number, tileSize: number): void {
+    if (!ctx) return;
+
+    const homeWidth = tileSize * 2;
+    const homeHeight = tileSize * 2;
+
+    // Draw house base (brown rectangle)
+    ctx.fillStyle = '#8B4513';
+    ctx.fillRect(startX, startY + homeHeight * 0.3, homeWidth, homeHeight * 0.7);
+
+    // Draw house outline
+    ctx.strokeStyle = '#654321';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(startX, startY + homeHeight * 0.3, homeWidth, homeHeight * 0.7);
+
+    // Draw roof (triangle)
+    ctx.fillStyle = '#A0522D';
+    ctx.beginPath();
+    ctx.moveTo(startX - tileSize * 0.1, startY + homeHeight * 0.3);
+    ctx.lineTo(startX + homeWidth + tileSize * 0.1, startY + homeHeight * 0.3);
+    ctx.lineTo(startX + homeWidth / 2, startY);
+    ctx.closePath();
+    ctx.fill();
+
+    // Draw roof outline
+    ctx.strokeStyle = '#8B4513';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Draw door
+    const doorWidth = tileSize * 0.4;
+    const doorHeight = tileSize * 0.8;
+    const doorX = startX + homeWidth / 2 - doorWidth / 2;
+    const doorY = startY + homeHeight - doorHeight;
+
+    ctx.fillStyle = '#654321';
+    ctx.fillRect(doorX, doorY, doorWidth, doorHeight);
+    ctx.strokeStyle = '#4A2C17';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(doorX, doorY, doorWidth, doorHeight);
+
+    // Draw door knob
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(doorX + doorWidth * 0.8, doorY + doorHeight * 0.5, tileSize * 0.03, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Draw windows
+    const windowSize = tileSize * 0.25;
+    const windowY = startY + homeHeight * 0.5;
+
+    // Left window
+    const leftWindowX = startX + tileSize * 0.3;
+    ctx.fillStyle = '#87CEEB';
+    ctx.fillRect(leftWindowX, windowY, windowSize, windowSize);
+    ctx.strokeStyle = '#654321';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(leftWindowX, windowY, windowSize, windowSize);
+
+    // Right window
+    const rightWindowX = startX + homeWidth - tileSize * 0.3 - windowSize;
+    ctx.fillRect(rightWindowX, windowY, windowSize, windowSize);
+    ctx.strokeRect(rightWindowX, windowY, windowSize, windowSize);
+
+    // Draw window crosses
+    ctx.strokeStyle = '#654321';
+    ctx.lineWidth = 1;
+    // Left window cross
+    ctx.beginPath();
+    ctx.moveTo(leftWindowX + windowSize / 2, windowY);
+    ctx.lineTo(leftWindowX + windowSize / 2, windowY + windowSize);
+    ctx.moveTo(leftWindowX, windowY + windowSize / 2);
+    ctx.lineTo(leftWindowX + windowSize, windowY + windowSize / 2);
+    ctx.stroke();
+
+    // Right window cross
+    ctx.beginPath();
+    ctx.moveTo(rightWindowX + windowSize / 2, windowY);
+    ctx.lineTo(rightWindowX + windowSize / 2, windowY + windowSize);
+    ctx.moveTo(rightWindowX, windowY + windowSize / 2);
+    ctx.lineTo(rightWindowX + windowSize, windowY + windowSize / 2);
+    ctx.stroke();
 }

@@ -17,8 +17,13 @@ export interface GameState {
 
 // Create initial game state
 export function createInitialState(): GameState {
+    const grid = TileSystem.createGrid(GRID_SIZE, GRID_SIZE, TileSystem.TileType.GRASS);
+
+    // Place the home in the center section
+    TileSystem.placeHomeInCenterSection(grid);
+
     return {
-        grid: TileSystem.createGrid(GRID_SIZE, GRID_SIZE, TileSystem.TileType.GRASS),
+        grid,
         scale: 1,
         offsetX: 0,
         offsetY: 0,
@@ -55,6 +60,12 @@ export function handleTileClick(x: number, y: number): void {
     if (tile) {
         const { sectionX, sectionY } = TileSystem.getTileSectionCoords(x, y);
         console.log(`Clicked tile at position ${x}, ${y} (Section: ${sectionX}, ${sectionY}, Type: ${tile.type})`);
+
+        // Special handling for home tiles
+        if (tile.type === TileSystem.TileType.HOME) {
+            console.log('Clicked on home! Home interactions could be added here.');
+            return;
+        }
 
         // Example: Convert grass to dirt when clicked (only in accessible areas)
         if (tile.type === TileSystem.TileType.GRASS) {
