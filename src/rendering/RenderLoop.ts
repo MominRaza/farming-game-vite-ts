@@ -1,7 +1,8 @@
 import { getCanvas, getContext, shouldRedraw, setRedrawComplete, triggerRedraw } from './Canvas';
 import { gameState, TILE_SIZE } from '../GameState';
 import * as TileSystem from '../tiles';
-import { drawHome, drawCropPatterns } from './TileRenderer';
+import { drawCropPatterns } from './TileRenderer';
+import { drawHome } from './painters/HomePainter';
 import { drawSectionDividers, drawLockedSections, setCachedScaledTileSize } from './SectionRenderer';
 import { TILE_COLORS, TILE_BORDER_COLORS } from './RenderConstants';
 
