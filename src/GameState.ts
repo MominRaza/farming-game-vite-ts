@@ -45,7 +45,22 @@ export function centerView(): void {
 
 // Handle tile click (placeholder for future interaction)
 export function handleTileClick(x: number, y: number): void {
-    console.log(`Clicked tile at position ${x}, ${y}`);
-    // In the future, this function will be expanded to handle different interactions
-    // For example, changing the tile type or placing objects
+    // Check if the tile is accessible (not in a locked section)
+    if (!TileSystem.isTileAccessible(gameState.grid, x, y)) {
+        console.log(`Cannot interact with locked section at tile ${x}, ${y}`);
+        return;
+    }
+
+    const tile = TileSystem.getTile(gameState.grid, x, y);
+    if (tile) {
+        const { sectionX, sectionY } = TileSystem.getTileSectionCoords(x, y);
+        console.log(`Clicked tile at position ${x}, ${y} (Section: ${sectionX}, ${sectionY}, Type: ${tile.type})`);
+
+        // Example: Convert grass to dirt when clicked (only in accessible areas)
+        if (tile.type === TileSystem.TileType.GRASS) {
+            TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.DIRT);
+        } else if (tile.type === TileSystem.TileType.DIRT) {
+            TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.GRASS);
+        }
+    }
 }
