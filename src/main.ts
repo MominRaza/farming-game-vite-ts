@@ -1,9 +1,8 @@
 import './style.css';
 import { centerView, gameState } from './GameState';
 import { render, initCanvas, getCanvas, startRenderLoop } from './rendering';
-import { setupInputHandlers } from './InputHandler';
+import { setupInputHandlers, setupToolsUI } from './ui';
 import { setupDebugUI } from './DebugUI';
-import { setupToolsUI } from './ToolsUI';
 import * as TileSystem from './tiles';
 
 // Initialize the game
