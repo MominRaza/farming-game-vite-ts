@@ -2,8 +2,6 @@
 
 > **See also:** [Requirements](requirements.md) | [Planning](planning.md) | [UI Mockups](ui-mockups.md)
 
-> **See also:** [Requirements](docs/requirements.md) | [Planning](docs/planning.md) | [UI Mockups](docs/ui-mockups.md)
-
 This document describes the typical player actions and the main gameplay loop in the farming game.
 
 ## Main User Flow

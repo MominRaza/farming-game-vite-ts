@@ -2,8 +2,6 @@
 
 > **See also:** [Requirements](requirements.md) | [Planning](planning.md) | [Crops & Seeds](crops.md) | [Tools](tools.md)
 
-> **See also:** [Requirements](docs/requirements.md) | [Planning](docs/planning.md) | [Crops & Seeds](docs/crops.md) | [Tools](docs/tools.md)
-
 This document describes how the game data is structured and stored in the farming game.
 
 ## Main Data Structures

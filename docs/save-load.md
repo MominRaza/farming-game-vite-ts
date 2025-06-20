@@ -2,8 +2,6 @@
 
 > **See also:** [Requirements](requirements.md) | [Planning](planning.md) | [Game State](game-state.md)
 
-> **See also:** [Requirements](docs/requirements.md) | [Planning](docs/planning.md) | [Game State](docs/game-state.md)
-
 This document describes how the game will save and load player progress.
 
 ## Save System

@@ -2,8 +2,6 @@
 
 > **See also:** [Requirements](requirements.md) | [Planning](planning.md) | [Game State](game-state.md)
 
-> **See also:** [Requirements](docs/requirements.md) | [Planning](docs/planning.md) | [Game State](docs/game-state.md)
-
 This document provides simple wireframes and descriptions for the main screens and UI elements of the farming game.
 
 ## Main Game Screen
