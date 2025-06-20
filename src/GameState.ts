@@ -1,6 +1,6 @@
 // Constants
 export const GRID_SIZE = 60; // 60x60 grid
-export const TILE_SIZE = 32; // Size of each tile in pixels
+export const TILE_SIZE = 64; // Size of each tile in pixels (doubled for better visual detail)
 
 import * as TileSystem from './tiles/TileSystem';
 
@@ -20,11 +20,9 @@ export function createInitialState(): GameState {
     const grid = TileSystem.createGrid(GRID_SIZE, GRID_SIZE, TileSystem.TileType.GRASS);
 
     // Place the home in the center section
-    TileSystem.placeHomeInCenterSection(grid);
-
-    return {
+    TileSystem.placeHomeInCenterSection(grid); return {
         grid,
-        scale: 1,
+        scale: 1, // Start at normal zoom level
         offsetX: 0,
         offsetY: 0,
         isDragging: false,

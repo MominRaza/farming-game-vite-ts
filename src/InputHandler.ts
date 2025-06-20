@@ -64,12 +64,10 @@ export function handleTouchEnd(): void {
 export function handleZoom(e: WheelEvent): void {
     // Calculate the position of the mouse in the world before zooming
     const mouseX = e.clientX - gameState.offsetX;
-    const mouseY = e.clientY - gameState.offsetY;
-
-    // Adjust the scale
+    const mouseY = e.clientY - gameState.offsetY;    // Adjust the scale
     const zoomFactor = 0.1;
     const delta = e.deltaY > 0 ? -zoomFactor : zoomFactor;
-    const newScale = Math.max(0.5, Math.min(2, gameState.scale + delta));
+    const newScale = Math.max(0.25, Math.min(2, gameState.scale + delta));
 
     // Calculate the position of the mouse in the world after zooming
     const newMouseX = mouseX * (newScale / gameState.scale);

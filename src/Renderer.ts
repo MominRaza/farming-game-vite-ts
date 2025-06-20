@@ -134,9 +134,7 @@ function actualRender(): void {
                     }
                     // Skip individual tile rendering for home tiles since we draw the whole home
                     continue;
-                }
-
-                // Fill tile background (handle fence type gracefully by treating as grass)
+                }                // Fill tile background (handle fence type gracefully by treating as grass)
                 const tileColor = (TILE_COLORS as any)[tile.type] || TILE_COLORS[TileSystem.TileType.GRASS];
                 ctx.fillStyle = tileColor;
                 ctx.fillRect(tileX, tileY, cachedScaledTileSize, cachedScaledTileSize);
@@ -146,6 +144,13 @@ function actualRender(): void {
                 ctx.strokeStyle = borderColor;
                 ctx.lineWidth = 1;
                 ctx.strokeRect(tileX, tileY, cachedScaledTileSize, cachedScaledTileSize);
+
+                // Draw seed patterns for planted tiles
+                if (tile.type === TileSystem.TileType.CARROT_SEEDS ||
+                    tile.type === TileSystem.TileType.WHEAT_SEEDS ||
+                    tile.type === TileSystem.TileType.TOMATO_SEEDS) {
+                    drawSeedPatterns(tile.type, tileX, tileY, cachedScaledTileSize);
+                }
             }
         }
     }
@@ -383,4 +388,54 @@ function drawHome(startX: number, startY: number, tileSize: number): void {
     ctx.moveTo(rightWindowX, windowY + windowSize / 2);
     ctx.lineTo(rightWindowX + windowSize, windowY + windowSize / 2);
     ctx.stroke();
+}
+
+// Draw seed patterns on planted tiles
+function drawSeedPatterns(tileType: string, x: number, y: number, size: number): void {
+    if (!ctx) return;
+
+    const centerX = x + size / 2;
+    const centerY = y + size / 2;
+    const radius = Math.max(2, size / 16); // Scale with tile size
+
+    switch (tileType) {
+        case TileSystem.TileType.CARROT_SEEDS:
+            // Draw small orange dots for carrot seeds
+            ctx.fillStyle = '#ff8c00';
+            for (let i = 0; i < 3; i++) {
+                const offsetX = (i - 1) * size / 6;
+                const offsetY = (Math.random() - 0.5) * size / 6;
+                ctx.beginPath();
+                ctx.arc(centerX + offsetX, centerY + offsetY, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            break;
+
+        case TileSystem.TileType.WHEAT_SEEDS:
+            // Draw small golden dots for wheat seeds
+            ctx.fillStyle = '#ffd700';
+            for (let i = 0; i < 4; i++) {
+                const angle = (i / 4) * Math.PI * 2;
+                const offsetX = Math.cos(angle) * size / 8;
+                const offsetY = Math.sin(angle) * size / 8;
+                ctx.beginPath();
+                ctx.arc(centerX + offsetX, centerY + offsetY, radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            break;
+
+        case TileSystem.TileType.TOMATO_SEEDS:
+            // Draw small red dots for tomato seeds
+            ctx.fillStyle = '#dc143c';
+            for (let i = 0; i < 2; i++) {
+                for (let j = 0; j < 2; j++) {
+                    const offsetX = (i - 0.5) * size / 4;
+                    const offsetY = (j - 0.5) * size / 4;
+                    ctx.beginPath();
+                    ctx.arc(centerX + offsetX, centerY + offsetY, radius * 1.2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            break;
+    }
 }
