@@ -1,8 +1,9 @@
 import './style.css';
-import { centerView, gameState } from './GameState';
+import { centerView, gameState, loadGameState } from './GameState';
 import { render, initCanvas, getCanvas, startRenderLoop } from './rendering';
-import { setupInputHandlers, setupToolsUI } from './ui';
+import { setupInputHandlers, setupToolsUI, setupSaveLoadUI } from './ui';
 import { setupDebugUI } from './DebugUI';
+import { SaveLoadService } from './services';
 import * as TileSystem from './tiles';
 
 // Initialize the game
@@ -16,8 +17,16 @@ function initGame(): void {
         return;
     }
 
-    // Center the view on the grid
-    centerView();
+    // Try to load saved game
+    const savedData = SaveLoadService.loadGame();
+    if (savedData) {
+        const loadedState = loadGameState(savedData.gameState);
+        Object.assign(gameState, loadedState);
+        console.log('Loaded saved game!');
+    } else {
+        // Center the view on the grid for new game
+        centerView();
+    }
 
     // Setup input handlers for interaction
     setupInputHandlers(canvas);
@@ -39,6 +48,9 @@ function gameLoop(): void {
     // Re-render if crops have grown
     if (hasGrowthChanges) {
         render();
+        // Auto-save when crops grow
+        SaveLoadService.saveGame(gameState);
+        console.log('Auto-saved due to crop growth');
     }
 }
 
@@ -54,5 +66,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initGame();
     setupDebugUI();
     setupToolsUI();
+    setupSaveLoadUI(gameState);
     startGameLoop();
 });

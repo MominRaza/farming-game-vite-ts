@@ -1,7 +1,25 @@
 import { ToolType } from './ToolTypes';
 import { getSelectedTool } from './ToolState';
 import { gameState } from '../../GameState';
+import { SaveLoadService } from '../../services';
 import * as TileSystem from '../../tiles';
+
+// Auto-save functionality with throttling to prevent excessive saves
+let autoSaveTimeout: number | null = null;
+
+function autoSave(): void {
+    // Clear any existing timeout
+    if (autoSaveTimeout !== null) {
+        clearTimeout(autoSaveTimeout);
+    }
+
+    // Set a new timeout to save after 1 second of inactivity
+    autoSaveTimeout = setTimeout(() => {
+        SaveLoadService.saveGame(gameState);
+        console.log('Auto-saved game progress');
+        autoSaveTimeout = null;
+    }, 1000);
+}
 
 // Apply the selected tool to a tile
 export function applyToolToTile(x: number, y: number): void {
@@ -29,6 +47,7 @@ export function applyToolToTile(x: number, y: number): void {
                 TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.GRASS);
                 console.log(`Applied grass at ${x}, ${y}`);
                 showToolFeedback(x, y, '🌱');
+                autoSave();
             }
             break;
         case ToolType.DIRT:
@@ -36,6 +55,7 @@ export function applyToolToTile(x: number, y: number): void {
                 TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.DIRT);
                 console.log(`Applied dirt at ${x}, ${y}`);
                 showToolFeedback(x, y, '🟫');
+                autoSave();
             }
             break;
         case ToolType.ROAD:
@@ -43,6 +63,7 @@ export function applyToolToTile(x: number, y: number): void {
                 TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.ROAD);
                 console.log(`Applied road at ${x}, ${y}`);
                 showToolFeedback(x, y, '🛤️');
+                autoSave();
             }
             break;
         case ToolType.CARROT_SEEDS:
@@ -50,6 +71,7 @@ export function applyToolToTile(x: number, y: number): void {
                 TileSystem.plantSeed(gameState.grid, x, y, TileSystem.TileType.CARROT_SEEDS);
                 console.log(`Planted carrot seeds at ${x}, ${y}`);
                 showToolFeedback(x, y, '🥕');
+                autoSave();
             } else {
                 console.log(`Carrot seeds can only be planted on dirt! Tile at ${x}, ${y} is ${tile.type}`);
                 showErrorMessage('Carrot seeds can only be planted on dirt tiles!');
@@ -60,6 +82,7 @@ export function applyToolToTile(x: number, y: number): void {
                 TileSystem.plantSeed(gameState.grid, x, y, TileSystem.TileType.WHEAT_SEEDS);
                 console.log(`Planted wheat seeds at ${x}, ${y}`);
                 showToolFeedback(x, y, '🌾');
+                autoSave();
             } else {
                 console.log(`Wheat seeds can only be planted on dirt! Tile at ${x}, ${y} is ${tile.type}`);
                 showErrorMessage('Wheat seeds can only be planted on dirt tiles!');
@@ -70,6 +93,7 @@ export function applyToolToTile(x: number, y: number): void {
                 TileSystem.plantSeed(gameState.grid, x, y, TileSystem.TileType.TOMATO_SEEDS);
                 console.log(`Planted tomato seeds at ${x}, ${y}`);
                 showToolFeedback(x, y, '🍅');
+                autoSave();
             } else {
                 console.log(`Tomato seeds can only be planted on dirt! Tile at ${x}, ${y} is ${tile.type}`);
                 showErrorMessage('Tomato seeds can only be planted on dirt tiles!');

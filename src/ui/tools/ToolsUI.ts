@@ -1,5 +1,8 @@
 import { ToolType } from './ToolTypes';
 import { setSelectedTool, getSelectedTool } from './ToolState';
+import { SaveLoadService } from '../../services';
+import { gameState, loadGameState } from '../../GameState';
+import { render } from '../../rendering';
 
 // Update tool button styles to show which is selected
 export function updateToolButtons(): void {
@@ -82,10 +85,10 @@ export function setupToolsUI(): void {
             </button>
             <button id="tomato-seeds-btn" class="tool-btn" title="Tomato Seeds - Plant on dirt (Press T)">
                 🍅 <span style="font-size: 10px; opacity: 0.7;">(T)</span>
-            </button>
-        </div>
+            </button>        </div>
         <div style="font-size: 11px; color: #ccc; text-align: center;">
-            Seeds can only be planted on dirt tiles
+            Seeds can only be planted on dirt tiles<br>
+            <span style="color: #ffd700;">💾 Ctrl+S: Save | 📁 Ctrl+L: Load</span>
         </div>
     `;
 
@@ -191,31 +194,86 @@ function setupToolEventListeners(): void {
 // Setup keyboard shortcuts
 function setupKeyboardShortcuts(): void {
     document.addEventListener('keydown', (e) => {
-        switch (e.key.toLowerCase()) {
-            case 'g':
-                setSelectedTool(ToolType.GRASS);
-                updateToolButtons();
-                break;
-            case 'd':
-                setSelectedTool(ToolType.DIRT);
-                updateToolButtons();
-                break;
-            case 'r':
-                setSelectedTool(ToolType.ROAD);
-                updateToolButtons();
-                break;
-            case 'c':
-                setSelectedTool(ToolType.CARROT_SEEDS);
-                updateToolButtons();
-                break;
-            case 'w':
-                setSelectedTool(ToolType.WHEAT_SEEDS);
-                updateToolButtons();
-                break;
-            case 't':
-                setSelectedTool(ToolType.TOMATO_SEEDS);
-                updateToolButtons();
-                break;
+        // Check for Ctrl+S (Save) and Ctrl+L (Load) first
+        if (e.ctrlKey || e.metaKey) {
+            if (e.key.toLowerCase() === 's') {
+                e.preventDefault(); // Prevent browser save dialog
+                const success = SaveLoadService.saveGame(gameState);
+                showSaveNotification(success ? 'Game saved successfully!' : 'Failed to save game!', success);
+                return;
+            }
+            if (e.key.toLowerCase() === 'l') {
+                e.preventDefault(); // Prevent browser location bar focus
+                const savedData = SaveLoadService.loadGame();
+                if (savedData) {
+                    const loadedState = loadGameState(savedData.gameState);
+                    Object.assign(gameState, loadedState);
+                    render();
+                    showSaveNotification('Game loaded successfully!', true);
+                } else {
+                    showSaveNotification('No saved game found!', false);
+                }
+                return;
+            }
+        }
+
+        // Tool shortcuts (only if no modifier keys are pressed)
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+            switch (e.key.toLowerCase()) {
+                case 'g':
+                    setSelectedTool(ToolType.GRASS);
+                    updateToolButtons();
+                    break;
+                case 'd':
+                    setSelectedTool(ToolType.DIRT);
+                    updateToolButtons();
+                    break;
+                case 'r':
+                    setSelectedTool(ToolType.ROAD);
+                    updateToolButtons();
+                    break;
+                case 'c':
+                    setSelectedTool(ToolType.CARROT_SEEDS);
+                    updateToolButtons();
+                    break;
+                case 'w':
+                    setSelectedTool(ToolType.WHEAT_SEEDS);
+                    updateToolButtons();
+                    break;
+                case 't':
+                    setSelectedTool(ToolType.TOMATO_SEEDS);
+                    updateToolButtons();
+                    break;
+            }
         }
     });
+}
+
+// Show save/load notification
+function showSaveNotification(message: string, isSuccess: boolean): void {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: ${isSuccess ? 'rgba(76, 175, 80, 0.95)' : 'rgba(244, 67, 54, 0.95)'};
+        color: white;
+        padding: 20px 30px;
+        border-radius: 8px;
+        font-size: 16px;
+        font-weight: bold;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        border: 2px solid ${isSuccess ? '#4CAF50' : '#f44336'};
+    `;
+    notification.textContent = message;
+
+    document.body.appendChild(notification);
+
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.parentNode.removeChild(notification);
+        }
+    }, 2000);
 }

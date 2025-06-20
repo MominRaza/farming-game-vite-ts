@@ -31,6 +31,32 @@ export function createInitialState(): GameState {
     };
 }
 
+// Load game state from saved data
+export function loadGameState(savedData: any): GameState {
+    // Reconstruct the Map from the serialized array
+    const tilesMap = new Map<string, any>();
+    if (savedData.grid && savedData.grid.tiles && Array.isArray(savedData.grid.tiles)) {
+        for (const [key, value] of savedData.grid.tiles) {
+            tilesMap.set(key, value);
+        }
+    }
+
+    return {
+        grid: {
+            width: savedData.grid?.width || GRID_SIZE,
+            height: savedData.grid?.height || GRID_SIZE,
+            tiles: tilesMap,
+            sections: savedData.grid?.sections || []
+        },
+        scale: savedData.scale || 1,
+        offsetX: savedData.offsetX || 0,
+        offsetY: savedData.offsetY || 0,
+        isDragging: false,
+        lastMouseX: 0,
+        lastMouseY: 0
+    };
+}
+
 // Global game state
 export const gameState = createInitialState();
 
