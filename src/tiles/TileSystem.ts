@@ -73,34 +73,12 @@ function createSections(): Section[][] {
                 x,
                 y,
                 isLocked: !isCenter, // Only center section is unlocked initially
-                hasFence: isCenter // Center section has fence around it
+                hasFence: false // No fences around sections
             };
         }
     }
 
     return sections;
-}
-
-// Check if a tile should be a fence based on its position
-function shouldBeFence(tileX: number, tileY: number, sections: Section[][]): boolean {
-    const { sectionX, sectionY } = getTileSectionCoords(tileX, tileY);
-
-    // Only add fences around unlocked sections that have hasFence = true
-    if (sectionX < 0 || sectionX >= SECTIONS_PER_ROW || sectionY < 0 || sectionY >= SECTIONS_PER_ROW) {
-        return false;
-    }
-
-    const section = sections[sectionX][sectionY];
-    if (!section.hasFence) {
-        return false;
-    }
-
-    // Get position within the section
-    const localX = tileX % SECTION_SIZE;
-    const localY = tileY % SECTION_SIZE;
-
-    // Check if it's on the border of the section
-    return localX === 0 || localX === SECTION_SIZE - 1 || localY === 0 || localY === SECTION_SIZE - 1;
 }
 
 // Create a new grid with sections
@@ -113,17 +91,14 @@ export function createGrid(width: number, height: number, defaultType: TileTypeV
             const key = positionKey(x, y);
             const { sectionX, sectionY } = getTileSectionCoords(x, y);
 
-            let tileType = defaultType;
-
-            // Determine tile type based on section status
+            let tileType = defaultType;            // Determine tile type based on section status
             if (sectionX >= 0 && sectionX < SECTIONS_PER_ROW && sectionY >= 0 && sectionY < SECTIONS_PER_ROW) {
                 const section = sections[sectionX][sectionY];
 
                 if (section.isLocked) {
                     tileType = TileType.LOCKED;
-                } else if (shouldBeFence(x, y, sections)) {
-                    tileType = TileType.FENCE;
                 }
+                // No fence logic - unlocked sections remain as default type
             }
 
             tiles.set(key, {
@@ -208,14 +183,14 @@ export function getSection(grid: Grid, sectionX: number, sectionY: number): Sect
 }
 
 // Unlock a section and update its tiles
-export function unlockSection(grid: Grid, sectionX: number, sectionY: number, addFence: boolean = false): void {
+export function unlockSection(grid: Grid, sectionX: number, sectionY: number): void {
     const section = getSection(grid, sectionX, sectionY);
     if (!section || !section.isLocked) {
         return; // Section doesn't exist or is already unlocked
     }
 
     section.isLocked = false;
-    section.hasFence = addFence;
+    section.hasFence = false; // Never add fences when unlocking
 
     // Update all tiles in this section
     updateSectionTiles(grid, sectionX, sectionY);
@@ -250,9 +225,8 @@ function updateSectionTiles(grid: Grid, sectionX: number, sectionY: number): voi
 
                 if (section.isLocked) {
                     newType = TileType.LOCKED;
-                } else if (section.hasFence && shouldBeFence(x, y, grid.sections)) {
-                    newType = TileType.FENCE;
                 }
+                // No fence logic - unlocked sections remain as grass
 
                 setTile(grid, x, y, newType);
             }

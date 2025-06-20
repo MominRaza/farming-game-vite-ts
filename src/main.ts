@@ -1,15 +1,17 @@
 import './style.css';
 import { centerView } from './GameState';
-import { render } from './Renderer';
+import { render, initCanvas, getCanvas } from './Renderer';
 import { setupInputHandlers } from './InputHandler';
 import { setupDebugUI } from './DebugUI';
 
 // Initialize the game
 function initGame(): void {
-    const tileContainer = document.getElementById('tile-container');
+    // Initialize canvas first
+    initCanvas();
 
-    if (!tileContainer) {
-        console.error('Tile container not found!');
+    const canvas = getCanvas();
+    if (!canvas) {
+        console.error('Canvas not found!');
         return;
     }
 
@@ -17,10 +19,12 @@ function initGame(): void {
     centerView();
 
     // Setup input handlers for interaction
-    setupInputHandlers(tileContainer);
+    setupInputHandlers(canvas);
 
     // Render the initial state
     render();
+
+    console.log('Canvas-based farming game initialized successfully!');
 }
 
 // Initialize the game when the DOM is loaded
