@@ -42,36 +42,6 @@ export function centerView(): void {
     const viewportHeight = window.innerHeight;
 
     const gridWidth = gameState.grid.width * TILE_SIZE;
-    const gridHeight = gameState.grid.height * TILE_SIZE;
-
-    gameState.offsetX = (viewportWidth - gridWidth) / 2;
+    const gridHeight = gameState.grid.height * TILE_SIZE; gameState.offsetX = (viewportWidth - gridWidth) / 2;
     gameState.offsetY = (viewportHeight - gridHeight) / 2;
-}
-
-// Handle tile click (placeholder for future interaction)
-export function handleTileClick(x: number, y: number): void {
-    // Check if the tile is accessible (not in a locked section)
-    if (!TileSystem.isTileAccessible(gameState.grid, x, y)) {
-        console.log(`Cannot interact with locked section at tile ${x}, ${y}`);
-        return;
-    }
-
-    const tile = TileSystem.getTile(gameState.grid, x, y);
-    if (tile) {
-        const { sectionX, sectionY } = TileSystem.getTileSectionCoords(x, y);
-        console.log(`Clicked tile at position ${x}, ${y} (Section: ${sectionX}, ${sectionY}, Type: ${tile.type})`);
-
-        // Special handling for home tiles
-        if (tile.type === TileSystem.TileType.HOME) {
-            console.log('Clicked on home! Home interactions could be added here.');
-            return;
-        }
-
-        // Example: Convert grass to dirt when clicked (only in accessible areas)
-        if (tile.type === TileSystem.TileType.GRASS) {
-            TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.DIRT);
-        } else if (tile.type === TileSystem.TileType.DIRT) {
-            TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.GRASS);
-        }
-    }
 }

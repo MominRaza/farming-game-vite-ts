@@ -1,6 +1,7 @@
-import { gameState, handleTileClick } from './GameState';
+import { gameState } from './GameState';
 import { render, screenToTileCoords, isOverLockIcon } from './Renderer';
 import * as TileSystem from './tiles/TileSystem';
+import { applyToolToTile } from './ToolsUI';
 
 // Event handlers for mouse dragging
 export function startDrag(e: MouseEvent): void {
@@ -185,14 +186,12 @@ export function setupInputHandlers(canvas: HTMLCanvasElement): void {
                 handleLockIconClick(lockIconCoords.sectionX, lockIconCoords.sectionY);
                 render();
                 return;
-            }
-
-            // Otherwise handle tile clicks
+            }            // Otherwise handle tile clicks with selected tool
             const tileCoords = screenToTileCoords(screenX, screenY);
             // Check if tile coordinates are within bounds
             if (tileCoords.x >= 0 && tileCoords.x < gameState.grid.width &&
                 tileCoords.y >= 0 && tileCoords.y < gameState.grid.height) {
-                handleTileClick(tileCoords.x, tileCoords.y);
+                applyToolToTile(tileCoords.x, tileCoords.y);
                 render(); // Re-render after tile interaction
             }
         }

@@ -3,6 +3,7 @@ import { centerView } from './GameState';
 import { render, initCanvas, getCanvas } from './Renderer';
 import { setupInputHandlers } from './InputHandler';
 import { setupDebugUI } from './DebugUI';
+import { setupToolsUI } from './ToolsUI';
 
 // Initialize the game
 function initGame(): void {
@@ -31,4 +32,5 @@ function initGame(): void {
 document.addEventListener('DOMContentLoaded', () => {
     initGame();
     setupDebugUI();
+    setupToolsUI();
 });
