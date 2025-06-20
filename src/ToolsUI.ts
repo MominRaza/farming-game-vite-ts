@@ -67,7 +67,7 @@ export function applyToolToTile(x: number, y: number): void {
             }
             break; case ToolType.CARROT_SEEDS:
             if (tile.type === TileSystem.TileType.DIRT) {
-                TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.CARROT_SEEDS);
+                TileSystem.plantSeed(gameState.grid, x, y, TileSystem.TileType.CARROT_SEEDS);
                 console.log(`Planted carrot seeds at ${x}, ${y}`);
                 showToolFeedback(x, y, '🥕');
             } else {
@@ -77,7 +77,7 @@ export function applyToolToTile(x: number, y: number): void {
             break;
         case ToolType.WHEAT_SEEDS:
             if (tile.type === TileSystem.TileType.DIRT) {
-                TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.WHEAT_SEEDS);
+                TileSystem.plantSeed(gameState.grid, x, y, TileSystem.TileType.WHEAT_SEEDS);
                 console.log(`Planted wheat seeds at ${x}, ${y}`);
                 showToolFeedback(x, y, '🌾');
             } else {
@@ -87,7 +87,7 @@ export function applyToolToTile(x: number, y: number): void {
             break;
         case ToolType.TOMATO_SEEDS:
             if (tile.type === TileSystem.TileType.DIRT) {
-                TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.TOMATO_SEEDS);
+                TileSystem.plantSeed(gameState.grid, x, y, TileSystem.TileType.TOMATO_SEEDS);
                 console.log(`Planted tomato seeds at ${x}, ${y}`);
                 showToolFeedback(x, y, '🍅');
             } else {

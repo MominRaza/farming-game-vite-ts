@@ -68,7 +68,13 @@ const TILE_COLORS = {
     [TileSystem.TileType.HOME]: '#8B4513',
     [TileSystem.TileType.CARROT_SEEDS]: '#f4a460',
     [TileSystem.TileType.WHEAT_SEEDS]: '#daa520',
-    [TileSystem.TileType.TOMATO_SEEDS]: '#ff6b6b'
+    [TileSystem.TileType.TOMATO_SEEDS]: '#ff6b6b',
+    [TileSystem.TileType.CARROT_GROWING]: '#e6d073',
+    [TileSystem.TileType.WHEAT_GROWING]: '#c8b42e',
+    [TileSystem.TileType.TOMATO_GROWING]: '#ff8a80',
+    [TileSystem.TileType.CARROT_MATURE]: '#ff8c00',
+    [TileSystem.TileType.WHEAT_MATURE]: '#ffd700',
+    [TileSystem.TileType.TOMATO_MATURE]: '#ff4444'
 };
 
 const TILE_BORDER_COLORS = {
@@ -79,7 +85,12 @@ const TILE_BORDER_COLORS = {
     [TileSystem.TileType.HOME]: '#654321',
     [TileSystem.TileType.CARROT_SEEDS]: '#cd853f',
     [TileSystem.TileType.WHEAT_SEEDS]: '#b8860b',
-    [TileSystem.TileType.TOMATO_SEEDS]: '#dc143c'
+    [TileSystem.TileType.TOMATO_SEEDS]: '#dc143c',
+    [TileSystem.TileType.CARROT_GROWING]: '#ccb366',
+    [TileSystem.TileType.WHEAT_GROWING]: '#b39e29',
+    [TileSystem.TileType.TOMATO_GROWING]: '#e57373', [TileSystem.TileType.CARROT_MATURE]: '#e67e00',
+    [TileSystem.TileType.WHEAT_MATURE]: '#e6c200',
+    [TileSystem.TileType.TOMATO_MATURE]: '#d32f2f'
 };
 
 // Public render function that marks for redraw
@@ -143,13 +154,17 @@ function actualRender(): void {
                 const borderColor = (TILE_BORDER_COLORS as any)[tile.type] || TILE_BORDER_COLORS[TileSystem.TileType.GRASS];
                 ctx.strokeStyle = borderColor;
                 ctx.lineWidth = 1;
-                ctx.strokeRect(tileX, tileY, cachedScaledTileSize, cachedScaledTileSize);
-
-                // Draw seed patterns for planted tiles
+                ctx.strokeRect(tileX, tileY, cachedScaledTileSize, cachedScaledTileSize);                // Draw crop patterns for all growth stages
                 if (tile.type === TileSystem.TileType.CARROT_SEEDS ||
                     tile.type === TileSystem.TileType.WHEAT_SEEDS ||
-                    tile.type === TileSystem.TileType.TOMATO_SEEDS) {
-                    drawSeedPatterns(tile.type, tileX, tileY, cachedScaledTileSize);
+                    tile.type === TileSystem.TileType.TOMATO_SEEDS ||
+                    tile.type === TileSystem.TileType.CARROT_GROWING ||
+                    tile.type === TileSystem.TileType.WHEAT_GROWING ||
+                    tile.type === TileSystem.TileType.TOMATO_GROWING ||
+                    tile.type === TileSystem.TileType.CARROT_MATURE ||
+                    tile.type === TileSystem.TileType.WHEAT_MATURE ||
+                    tile.type === TileSystem.TileType.TOMATO_MATURE) {
+                    drawCropPatterns(tile.type, tileX, tileY, cachedScaledTileSize);
                 }
             }
         }
@@ -390,8 +405,8 @@ function drawHome(startX: number, startY: number, tileSize: number): void {
     ctx.stroke();
 }
 
-// Draw seed patterns on planted tiles
-function drawSeedPatterns(tileType: string, x: number, y: number, size: number): void {
+// Draw crop patterns for all growth stages
+function drawCropPatterns(tileType: string, x: number, y: number, size: number): void {
     if (!ctx) return;
 
     const centerX = x + size / 2;
@@ -399,6 +414,7 @@ function drawSeedPatterns(tileType: string, x: number, y: number, size: number):
     const radius = Math.max(2, size / 16); // Scale with tile size
 
     switch (tileType) {
+        // Carrot stages
         case TileSystem.TileType.CARROT_SEEDS:
             // Draw small orange dots for carrot seeds
             ctx.fillStyle = '#ff8c00';
@@ -411,6 +427,28 @@ function drawSeedPatterns(tileType: string, x: number, y: number, size: number):
             }
             break;
 
+        case TileSystem.TileType.CARROT_GROWING:
+            // Draw small green sprouts for growing carrots
+            ctx.fillStyle = '#32cd32';
+            for (let i = 0; i < 4; i++) {
+                const offsetX = (i - 1.5) * size / 8;
+                const offsetY = -size / 6;
+                ctx.fillRect(centerX + offsetX - 1, centerY + offsetY, 2, size / 4);
+            }
+            break;
+
+        case TileSystem.TileType.CARROT_MATURE:
+            // Draw full carrot with green top
+            ctx.fillStyle = '#ff6347';
+            ctx.fillRect(centerX - size / 8, centerY, size / 4, size / 6);
+            ctx.fillStyle = '#32cd32';
+            for (let i = 0; i < 3; i++) {
+                const offsetX = (i - 1) * size / 12;
+                ctx.fillRect(centerX + offsetX - 1, centerY - size / 6, 2, size / 4);
+            }
+            break;
+
+        // Wheat stages
         case TileSystem.TileType.WHEAT_SEEDS:
             // Draw small golden dots for wheat seeds
             ctx.fillStyle = '#ffd700';
@@ -424,6 +462,29 @@ function drawSeedPatterns(tileType: string, x: number, y: number, size: number):
             }
             break;
 
+        case TileSystem.TileType.WHEAT_GROWING:
+            // Draw growing wheat stalks
+            ctx.fillStyle = '#9acd32';
+            for (let i = 0; i < 6; i++) {
+                const offsetX = (i - 2.5) * size / 10;
+                ctx.fillRect(centerX + offsetX - 1, centerY - size / 4, 2, size / 2);
+            }
+            break;
+
+        case TileSystem.TileType.WHEAT_MATURE:
+            // Draw mature wheat with grain heads
+            ctx.fillStyle = '#daa520';
+            for (let i = 0; i < 5; i++) {
+                const offsetX = (i - 2) * size / 8;
+                ctx.fillRect(centerX + offsetX - 1, centerY - size / 3, 2, size / 2);
+                // Grain head
+                ctx.fillStyle = '#ffd700';
+                ctx.fillRect(centerX + offsetX - 2, centerY - size / 3, 4, size / 8);
+                ctx.fillStyle = '#daa520';
+            }
+            break;
+
+        // Tomato stages
         case TileSystem.TileType.TOMATO_SEEDS:
             // Draw small red dots for tomato seeds
             ctx.fillStyle = '#dc143c';
@@ -435,6 +496,38 @@ function drawSeedPatterns(tileType: string, x: number, y: number, size: number):
                     ctx.arc(centerX + offsetX, centerY + offsetY, radius * 1.2, 0, Math.PI * 2);
                     ctx.fill();
                 }
+            }
+            break;
+
+        case TileSystem.TileType.TOMATO_GROWING:
+            // Draw tomato plant with small green fruits
+            ctx.fillStyle = '#228b22';
+            // Stem
+            ctx.fillRect(centerX - 1, centerY - size / 4, 2, size / 2);
+            // Small green tomatoes
+            ctx.fillStyle = '#32cd32';
+            for (let i = 0; i < 3; i++) {
+                const offsetX = (i - 1) * size / 6;
+                const offsetY = -size / 8;
+                ctx.beginPath();
+                ctx.arc(centerX + offsetX, centerY + offsetY, radius * 1.5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            break;
+
+        case TileSystem.TileType.TOMATO_MATURE:
+            // Draw tomato plant with ripe red tomatoes
+            ctx.fillStyle = '#228b22';
+            // Stem
+            ctx.fillRect(centerX - 1, centerY - size / 4, 2, size / 2);
+            // Ripe red tomatoes
+            ctx.fillStyle = '#ff4444';
+            for (let i = 0; i < 3; i++) {
+                const offsetX = (i - 1) * size / 6;
+                const offsetY = -size / 8;
+                ctx.beginPath();
+                ctx.arc(centerX + offsetX, centerY + offsetY, radius * 2, 0, Math.PI * 2);
+                ctx.fill();
             }
             break;
     }
