@@ -4,9 +4,10 @@ export const ToolType = {
     GRASS: 'grass',
     DIRT: 'dirt',
     ROAD: 'road',
-    CARROT_SEEDS: 'carrot_seeds',
-    WHEAT_SEEDS: 'wheat_seeds',
-    TOMATO_SEEDS: 'tomato_seeds',
+    CARROT_SEEDS: 'carrot_seeds',    // Hardcoded for now to maintain UI compatibility  
+    WHEAT_SEEDS: 'wheat_seeds',      // Hardcoded for now to maintain UI compatibility
+    TOMATO_SEEDS: 'tomato_seeds',    // Hardcoded for now to maintain UI compatibility
+    CORN_SEEDS: 'corn_seeds',        // New seed automatically available!
     HARVEST: 'harvest',
     WATER: 'water'
 } as const;

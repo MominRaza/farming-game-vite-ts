@@ -2,6 +2,22 @@
 
 Welcome to the Farming Game project! This repository contains all the documentation and code for building a 2D farming game using HTML, CSS, and TypeScript.
 
+## 🎯 **NEW: Easy Seed Extension System!**
+
+This game now features a **centralized seed configuration system** that makes adding new seeds incredibly easy! 
+
+### ✨ **Add a New Seed in Just 4 Steps:**
+1. Add crop type to `TileTypes.ts`
+2. Add configuration to `SeedConfig.ts` 
+3. Create painter function in `CropPainter.ts`
+4. Update renderer in `TileRenderer.ts`
+
+**That's it!** Everything else (shop prices, growth times, tool generation, UI integration) happens automatically!
+
+🌽 **Example**: We added corn seeds as a demonstration - check out the code to see how simple it is!
+
+📖 **Full Guide**: See [Adding New Seeds Guide](docs/adding-new-seeds.md) for complete instructions.
+
 ## 📚 Documentation Overview
 
 - [Requirements Document](requirements.md): High-level overview and core features of the game.

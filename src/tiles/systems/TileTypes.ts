@@ -12,7 +12,8 @@ export type TileTypeValue = typeof TileType[keyof typeof TileType];
 export const CropType = {
     CARROT: 'carrot',
     WHEAT: 'wheat',
-    TOMATO: 'tomato'
+    TOMATO: 'tomato',
+    CORN: 'corn'  // New seed added here - that's it!
 } as const;
 
 export type CropTypeValue = typeof CropType[keyof typeof CropType];
@@ -57,6 +58,9 @@ export interface Tile {
     // Occupation data
     occupation?: OccupationTypeValue; // What occupies this tile (home, crop)
     cropData?: CropData; // Crop information if occupied by crop
+
+    // Water system - tracks watering for dirt tiles
+    wateredTime?: number; // When the dirt tile was last watered (separate from crop watering)
 }
 
 // Interface for a section

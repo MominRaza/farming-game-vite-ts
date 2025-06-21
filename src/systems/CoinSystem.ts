@@ -1,20 +1,22 @@
-import { CropType } from '../tiles/systems/TileTypes';
 import type { CropTypeValue } from '../tiles/systems/TileTypes';
 import { CENTER_SECTION_X, CENTER_SECTION_Y } from '../tiles/systems/TileUtils';
+import { getSeedConfig, getAllSeedConfigs } from '../config/SeedConfig';
 
-// Coin values for different crops (adjusted for new growth times)
-// Wheat: fast growth (30s) = lower value
-// Carrot: medium growth (60s) = medium value  
-// Tomato: slow growth (90s) = higher value
-export const CROP_VALUES = {
-    [CropType.WHEAT]: 8,    // Fast growth, decent value
-    [CropType.CARROT]: 12,  // Medium growth, medium value
-    [CropType.TOMATO]: 20   // Slow growth, high value
-} as const;
-
-// Get coin value for a crop type
+// Get coin values from centralized config
 export function getCropValue(cropType: CropTypeValue): number {
-    return CROP_VALUES[cropType] || 0;
+    return getSeedConfig(cropType).sellValue;
+}
+
+// Get all crop values for reference
+export function getAllCropValues(): Record<CropTypeValue, number> {
+    const configs = getAllSeedConfigs();
+    const values: Record<string, number> = {};
+
+    Object.entries(configs).forEach(([cropType, config]) => {
+        values[cropType] = config.sellValue;
+    });
+
+    return values as Record<CropTypeValue, number>;
 }
 
 // Award coins for harvesting a crop
@@ -23,18 +25,12 @@ export function awardCoins(gameState: { coins: number }, cropType: CropTypeValue
 
     if (typeof cropType === 'string') {
         // Handle string crop types (backwards compatibility)
-        switch (cropType) {
-            case 'carrot':
-                value = CROP_VALUES[CropType.CARROT];
-                break;
-            case 'wheat':
-                value = CROP_VALUES[CropType.WHEAT];
-                break;
-            case 'tomato':
-                value = CROP_VALUES[CropType.TOMATO];
-                break;
-            default:
-                value = 0;
+        try {
+            const config = getSeedConfig(cropType as CropTypeValue);
+            value = config.sellValue;
+        } catch {
+            // If crop type not found, default to 0
+            value = 0;
         }
     } else {
         value = getCropValue(cropType);
@@ -50,20 +46,28 @@ export function formatCoins(coins: number): string {
 }
 
 // Tool costs for different actions
-export const TOOL_COSTS = {
-    GRASS: 1,
-    DIRT: 2,
-    ROAD: 5,
-    WHEAT_SEEDS: 4,      // Adjusted from 2 (faster growth, slightly higher cost)
-    CARROT_SEEDS: 6,     // Adjusted from 3 (medium growth, medium cost)
-    TOMATO_SEEDS: 10,    // Adjusted from 4 (slow growth, higher cost but better return)
-    WATER: 2,            // New: small cost to water crops
-    HARVEST: 0           // Harvesting is free
-} as const;
+export function getToolCosts(): Record<string, number> {
+    const configs = getAllSeedConfigs();
+    const costs: Record<string, number> = {
+        GRASS: 1,
+        DIRT: 2,
+        ROAD: 5,
+        WATER: 2,
+        HARVEST: 0
+    };
+
+    // Add seed costs from centralized config
+    Object.entries(configs).forEach(([cropType, config]) => {
+        costs[`${cropType.toUpperCase()}_SEEDS`] = config.buyPrice;
+    });
+
+    return costs;
+}
 
 // Get cost for a tool action
 export function getToolCost(toolType: string): number {
-    return TOOL_COSTS[toolType as keyof typeof TOOL_COSTS] || 0;
+    const costs = getToolCosts();
+    return costs[toolType.toUpperCase()] || 0;
 }
 
 // Check if player can afford a tool action

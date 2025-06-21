@@ -1,7 +1,7 @@
 import { getContext } from './Canvas';
 import { TILE_COLORS } from './RenderConstants';
 import * as TileSystem from '../tiles';
-import { drawCarrotCrop, drawWheatCrop, drawTomatoCrop, drawTileBackground, drawTileGrid } from './painters';
+import { drawCarrotCrop, drawWheatCrop, drawTomatoCrop, drawCornCrop, drawTileBackground, drawTileGrid } from './painters';
 
 // Draw crop patterns based on crop data
 export function drawCropPatterns(cropData: TileSystem.CropData, x: number, y: number, size: number): void {
@@ -20,9 +20,7 @@ export function drawCropPatterns(cropData: TileSystem.CropData, x: number, y: nu
         case TileSystem.CropStage.MATURE:
             stage = 'mature';
             break;
-    }
-
-    switch (cropData.type) {
+    }    switch (cropData.type) {
         case TileSystem.CropType.CARROT:
             drawCarrotCrop(centerX, centerY, size, stage);
             break;
@@ -31,6 +29,9 @@ export function drawCropPatterns(cropData: TileSystem.CropData, x: number, y: nu
             break;
         case TileSystem.CropType.TOMATO:
             drawTomatoCrop(centerX, centerY, size, stage);
+            break;
+        case TileSystem.CropType.CORN:
+            drawCornCrop(centerX, centerY, size, stage);
             break;
     }
 }
@@ -69,11 +70,15 @@ export function drawTile(x: number, y: number, tile: TileSystem.Tile, tileSize: 
     if (tile.type === TileSystem.TileType.GRASS) {
         drawTileBackground(centerX, centerY, tileSize, 'grass');
     } else if (tile.type === TileSystem.TileType.DIRT) {
-        // Use tilled background if occupied by crops, otherwise regular dirt
+        // Check if dirt is watered (for both empty dirt and dirt with crops)
+        const isDirtWatered = tile.wateredTime && isWaterEffective(tile.wateredTime);
+
+        // Use tilled background if occupied by crops, otherwise dirt (watered or normal)
         if (tile.occupation === TileSystem.OccupationType.CROP) {
             drawTileBackground(centerX, centerY, tileSize, 'tilled');
         } else {
-            drawTileBackground(centerX, centerY, tileSize, 'dirt');
+            // Empty dirt - show watered or normal dirt
+            drawTileBackground(centerX, centerY, tileSize, isDirtWatered ? 'watered-dirt' : 'dirt');
         }
     } else {
         // Fallback to color constants for other tile types (road, locked)

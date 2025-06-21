@@ -7,6 +7,7 @@ import * as CropSystem from '../../tiles/systems/CropSystem';
 import * as CoinSystem from '../../systems/CoinSystem';
 import { updateCoinDisplay, showCoinEarnedAnimation } from '../coin';
 import { updateToolButtonStates } from './ToolsUI';
+import { getSeedConfig, getCropTypeFromToolType } from '../../config/SeedConfig';
 
 // Auto-save functionality with throttling to prevent excessive saves
 let autoSaveTimeout: number | null = null;
@@ -117,98 +118,55 @@ export function applyToolToTile(x: number, y: number): void {
                 updateToolButtonStates(); // Update button states after spending coins
                 autoSave();
             }
-            break; case ToolType.CARROT_SEEDS:
-            if (tile.type === TileSystem.TileType.DIRT && !tile.occupation) {
-                // Check if player can afford carrot seeds
-                if (!CoinSystem.canAfford(gameState, 'CARROT_SEEDS')) {
-                    showErrorMessage(`Not enough coins! Carrot seeds cost ${CoinSystem.getToolCost('CARROT_SEEDS')} coins.`);
-                    return;
-                }
+            break; default:
+            // Handle seed tools dynamically
+            const toolString = selectedTool as string;
+            if (toolString.endsWith('_seeds')) {
+                const cropType = getCropTypeFromToolType(toolString);
+                if (cropType && tile.type === TileSystem.TileType.DIRT && !tile.occupation) {
+                    const seedConfig = getSeedConfig(cropType);
+                    const toolCost = CoinSystem.getToolCost(toolString.toUpperCase());
 
-                // Spend coins for the seeds
-                const carrotCost = CoinSystem.spendCoins(gameState, 'CARROT_SEEDS');
+                    // Check if player can afford seeds
+                    if (!CoinSystem.canAfford(gameState, toolString.toUpperCase())) {
+                        showErrorMessage(`Not enough coins! ${seedConfig.name} seeds cost ${toolCost} coins.`);
+                        return;
+                    }
 
-                const planted = CropSystem.plantSeed(gameState.grid, x, y, TileSystem.CropType.CARROT);
-                if (planted) {
-                    console.log(`Planted carrot seeds at ${x}, ${y} - Cost: ${carrotCost.cost} coins`);
-                    showToolFeedback(x, y, '🥕');
-                    updateCoinDisplay();
-                    updateToolButtonStates(); // Update button states after spending coins
-                    autoSave();
-                } else {
-                    showErrorMessage('Failed to plant carrot seeds!');
+                    // Spend coins for the seeds
+                    const seedCost = CoinSystem.spendCoins(gameState, toolString.toUpperCase());
+
+                    const planted = CropSystem.plantSeed(gameState.grid, x, y, cropType);
+                    if (planted) {
+                        console.log(`Planted ${seedConfig.name} seeds at ${x}, ${y} - Cost: ${seedCost.cost} coins`);
+                        showToolFeedback(x, y, seedConfig.icon);
+                        updateCoinDisplay();
+                        updateToolButtonStates(); // Update button states after spending coins
+                        autoSave();
+                    } else {
+                        showErrorMessage(`Failed to plant ${seedConfig.name} seeds!`);
+                    }
+                } else if (cropType) {
+                    const seedConfig = getSeedConfig(cropType);
+                    console.log(`${seedConfig.name} seeds can only be planted on empty dirt! Tile at ${x}, ${y} is ${tile.type}${tile.occupation ? ' occupied by ' + tile.occupation : ''}`);
+                    showErrorMessage(`${seedConfig.name} seeds can only be planted on empty dirt tiles!`);
                 }
-            } else {
-                console.log(`Carrot seeds can only be planted on empty dirt! Tile at ${x}, ${y} is ${tile.type}${tile.occupation ? ' occupied by ' + tile.occupation : ''}`);
-                showErrorMessage('Carrot seeds can only be planted on empty dirt tiles!');
             }
-            break; case ToolType.WHEAT_SEEDS:
-            if (tile.type === TileSystem.TileType.DIRT && !tile.occupation) {
-                // Check if player can afford wheat seeds
-                if (!CoinSystem.canAfford(gameState, 'WHEAT_SEEDS')) {
-                    showErrorMessage(`Not enough coins! Wheat seeds cost ${CoinSystem.getToolCost('WHEAT_SEEDS')} coins.`);
-                    return;
-                }
-
-                // Spend coins for the seeds
-                const wheatCost = CoinSystem.spendCoins(gameState, 'WHEAT_SEEDS');
-
-                const planted = CropSystem.plantSeed(gameState.grid, x, y, TileSystem.CropType.WHEAT);
-                if (planted) {
-                    console.log(`Planted wheat seeds at ${x}, ${y} - Cost: ${wheatCost.cost} coins`);
-                    showToolFeedback(x, y, '🌾');
-                    updateCoinDisplay();
-                    updateToolButtonStates(); // Update button states after spending coins
-                    autoSave();
-                } else {
-                    showErrorMessage('Failed to plant wheat seeds!');
-                }
-            } else {
-                console.log(`Wheat seeds can only be planted on empty dirt! Tile at ${x}, ${y} is ${tile.type}${tile.occupation ? ' occupied by ' + tile.occupation : ''}`);
-                showErrorMessage('Wheat seeds can only be planted on empty dirt tiles!');
-            }
-            break; case ToolType.TOMATO_SEEDS:
-            if (tile.type === TileSystem.TileType.DIRT && !tile.occupation) {
-                // Check if player can afford tomato seeds
-                if (!CoinSystem.canAfford(gameState, 'TOMATO_SEEDS')) {
-                    showErrorMessage(`Not enough coins! Tomato seeds cost ${CoinSystem.getToolCost('TOMATO_SEEDS')} coins.`);
-                    return;
-                }
-
-                // Spend coins for the seeds
-                const tomatoCost = CoinSystem.spendCoins(gameState, 'TOMATO_SEEDS');
-
-                const planted = CropSystem.plantSeed(gameState.grid, x, y, TileSystem.CropType.TOMATO);
-                if (planted) {
-                    console.log(`Planted tomato seeds at ${x}, ${y} - Cost: ${tomatoCost.cost} coins`);
-                    showToolFeedback(x, y, '🍅');
-                    updateCoinDisplay();
-                    updateToolButtonStates(); // Update button states after spending coins
-                    autoSave();
-                } else {
-                    showErrorMessage('Failed to plant tomato seeds!');
-                }
-            } else {
-                console.log(`Tomato seeds can only be planted on empty dirt! Tile at ${x}, ${y} is ${tile.type}${tile.occupation ? ' occupied by ' + tile.occupation : ''}`);
-                showErrorMessage('Tomato seeds can only be planted on empty dirt tiles!');
-            }
-            break;
-
-        case ToolType.WATER:
-            // Check if the tile can be watered
-            if (CropSystem.canWaterTile(gameState.grid, x, y)) {
+            break; case ToolType.WATER:
+            // Check if the tile can be watered (crop or dirt)
+            if (CropSystem.canWaterAnyTile(gameState.grid, x, y)) {
                 // Check if player can afford watering
                 if (!CoinSystem.canAfford(gameState, 'WATER')) {
                     showErrorMessage(`Not enough coins to water! Cost: ${CoinSystem.getToolCost('WATER')} coins.`);
                     return;
                 }
 
-                // Spend coins and water the crop
+                // Spend coins and water the tile (crop or dirt)
                 const paymentResult = CoinSystem.spendCoins(gameState, 'WATER');
                 if (paymentResult.success) {
-                    const waterResult = CropSystem.waterCrop(gameState.grid, x, y);
+                    const waterResult = CropSystem.waterAnyTile(gameState.grid, x, y);
                     if (waterResult.success) {
-                        console.log(`Watered crop at ${x}, ${y} - Cost ${paymentResult.cost} coins`);
+                        console.log(`Watered tile at ${x}, ${y} - Cost ${paymentResult.cost} coins`);
                         showToolFeedback(x, y, '💧✨');
 
                         // Update coin display and button states
@@ -220,7 +178,7 @@ export function applyToolToTile(x: number, y: number): void {
                     }
                 }
             } else {
-                showErrorMessage('Nothing to water here! Only growing crops can be watered.');
+                showErrorMessage('Nothing to water here! Water crops or empty dirt tiles.');
             }
             break; case ToolType.HARVEST:
             const harvestResult = CropSystem.harvestCrop(gameState.grid, x, y);

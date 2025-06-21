@@ -1,6 +1,7 @@
 import type { Grid, CropTypeValue, CropData } from './TileTypes';
-import { TileType, CropType, CropStage, OccupationType, WATER_DURATION, WATER_GROWTH_MULTIPLIER } from './TileTypes';
+import { TileType, CropStage, OccupationType, WATER_DURATION, WATER_GROWTH_MULTIPLIER } from './TileTypes';
 import { positionKey } from './TileUtils';
+import { getSeedConfig } from '../../config/SeedConfig';
 
 // Plant a seed at the specified position (only on dirt tiles)
 export function plantSeed(grid: Grid, x: number, y: number, cropType: CropTypeValue): boolean {
@@ -33,21 +34,14 @@ export function plantSeed(grid: Grid, x: number, y: number, cropType: CropTypeVa
     return false;
 }
 
-// Growth timing constants (in milliseconds)
-export const CROP_GROWTH_TIMES = {
-    [CropType.WHEAT]: {
-        SEED_TO_GROWING: 10000,   // 10 seconds
-        GROWING_TO_MATURE: 20000  // 20 seconds (30s total)
-    },
-    [CropType.CARROT]: {
-        SEED_TO_GROWING: 20000,   // 20 seconds  
-        GROWING_TO_MATURE: 40000  // 40 seconds (60s total)
-    },
-    [CropType.TOMATO]: {
-        SEED_TO_GROWING: 30000,   // 30 seconds
-        GROWING_TO_MATURE: 60000  // 60 seconds (90s total)
-    }
-} as const;
+// Get growth times from centralized config
+export function getCropGrowthTimes(cropType: CropTypeValue): { seedToGrowing: number, growingToMature: number } {
+    const config = getSeedConfig(cropType);
+    return {
+        seedToGrowing: config.growthTimes.seedToGrowing,
+        growingToMature: config.growthTimes.growingToMature
+    };
+}
 
 // Check if water is still effective (within duration)
 function isWaterEffective(wateredTime: number | undefined): boolean {
@@ -112,14 +106,6 @@ export function getRemainingGrowthTime(cropData: CropData): number {
     }
 
     return 0;
-}
-
-// Get growth times for a specific crop type
-function getCropGrowthTimes(cropType: CropTypeValue): { seedToGrowing: number, growingToMature: number } {
-    return {
-        seedToGrowing: CROP_GROWTH_TIMES[cropType].SEED_TO_GROWING,
-        growingToMature: CROP_GROWTH_TIMES[cropType].GROWING_TO_MATURE
-    };
 }
 
 // Update crop growth for all tiles
@@ -239,6 +225,39 @@ export function waterCrop(grid: Grid, x: number, y: number): { success: boolean;
     return { success: true, message: `Crop watered! It will grow ${Math.round((WATER_GROWTH_MULTIPLIER - 1) * 100)}% faster for ${WATER_DURATION / 1000} seconds.` };
 }
 
+// Water a dirt tile to make it appear darker
+export function waterDirtTile(grid: Grid, x: number, y: number): { success: boolean; message?: string } {
+    const key = positionKey(x, y);
+    const tile = grid.tiles.get(key);
+
+    if (!tile) {
+        return { success: false, message: 'No tile found' };
+    }
+
+    // Check if tile is dirt
+    if (tile.type !== TileType.DIRT) {
+        return { success: false, message: 'Can only water dirt tiles!' };
+    }
+
+    // Check if tile is occupied by a crop
+    if (tile.occupation === OccupationType.CROP) {
+        return { success: false, message: 'Use water on the crop instead!' };
+    }
+
+    // Check if already watered and water is still effective
+    if (isWaterEffective(tile.wateredTime)) {
+        return { success: false, message: 'This dirt is already watered!' };
+    }
+
+    // Water the dirt tile
+    grid.tiles.set(key, {
+        ...tile,
+        wateredTime: Date.now()
+    });
+
+    return { success: true, message: `Dirt watered! It will stay dark for ${WATER_DURATION / 1000} seconds.` };
+}
+
 // Check if a tile can be watered
 export function canWaterTile(grid: Grid, x: number, y: number): boolean {
     const key = positionKey(x, y);
@@ -249,4 +268,42 @@ export function canWaterTile(grid: Grid, x: number, y: number): boolean {
     }
 
     return tile.cropData.stage < CropStage.MATURE && !isWaterEffective(tile.cropData.wateredTime);
+}
+
+// Check if a dirt tile can be watered
+export function canWaterDirtTile(grid: Grid, x: number, y: number): boolean {
+    const key = positionKey(x, y);
+    const tile = grid.tiles.get(key);
+
+    if (!tile || tile.type !== TileType.DIRT) {
+        return false;
+    }
+
+    // Don't water if occupied by a crop (use crop watering instead)
+    if (tile.occupation === OccupationType.CROP) {
+        return false;
+    }
+
+    // Can water if not already watered or water has expired
+    return !isWaterEffective(tile.wateredTime);
+}
+
+// Combined function to check if any tile can be watered (crop or dirt)
+export function canWaterAnyTile(grid: Grid, x: number, y: number): boolean {
+    return canWaterTile(grid, x, y) || canWaterDirtTile(grid, x, y);
+}
+
+// Combined function to water any tile (crop or dirt)
+export function waterAnyTile(grid: Grid, x: number, y: number): { success: boolean; message?: string } {
+    // Try to water crop first
+    if (canWaterTile(grid, x, y)) {
+        return waterCrop(grid, x, y);
+    }
+
+    // Fall back to watering dirt
+    if (canWaterDirtTile(grid, x, y)) {
+        return waterDirtTile(grid, x, y);
+    }
+
+    return { success: false, message: 'Nothing to water here!' };
 }

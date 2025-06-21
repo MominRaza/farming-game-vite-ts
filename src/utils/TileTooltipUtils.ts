@@ -1,8 +1,9 @@
-import { TileType, CropType, CropStage, OccupationType } from '../tiles/systems/TileTypes';
+import { TileType, CropStage, OccupationType } from '../tiles/systems/TileTypes';
 import { getTile, isTileAccessible } from '../tiles';
 import { getCropGrowthProgress, getRemainingGrowthTime, isWatered, getRemainingWaterTime } from '../tiles/systems/CropSystem';
 import type { ToolTypeValue } from '../ui/tools/ToolTypes';
 import { getToolCost, canAfford } from '../systems/CoinSystem';
+import { getSeedConfig, getAllSeedConfigs } from '../config/SeedConfig';
 
 // Get detailed information about a tile for tooltip display
 export function getTileTooltipInfo(grid: any, x: number, y: number, selectedTool: ToolTypeValue, currentCoins: number): string | null {
@@ -64,15 +65,9 @@ export function getTileTooltipInfo(grid: any, x: number, y: number, selectedTool
     } else if (tile.occupation === OccupationType.CROP && tile.cropData) {
         const crop = tile.cropData;
 
-        // Crop type information
-        const cropInfo = {
-            [CropType.CARROT]: { name: 'Carrot', icon: '🥕', color: '#ff8c00' },
-            [CropType.WHEAT]: { name: 'Wheat', icon: '🌾', color: '#daa520' },
-            [CropType.TOMATO]: { name: 'Tomato', icon: '🍅', color: '#ff6347' }
-        };
-
-        const cropDisplay = cropInfo[crop.type];
-        content += `<div style="margin-top: 5px; color: ${cropDisplay.color};">${cropDisplay.icon} <strong>${cropDisplay.name}</strong></div>`;
+        // Get crop info from centralized config
+        const seedConfig = getSeedConfig(crop.type);
+        content += `<div style="margin-top: 5px; color: ${seedConfig.colors.mature};">${seedConfig.icon} <strong>${seedConfig.name}</strong></div>`;
 
         // Growth stage
         const stageNames = {
@@ -128,17 +123,23 @@ export function getTileTooltipInfo(grid: any, x: number, y: number, selectedTool
 
 // Helper function to get tool display information
 function getToolDisplayInfo(toolType: ToolTypeValue): { name: string; icon: string } {
-    const toolInfo = {
+    // Get all seed configs for dynamic seed tools
+    const seedConfigs = getAllSeedConfigs();
+
+    const toolInfo: Record<string, { name: string; icon: string }> = {
         'grass': { name: 'Grass Tool', icon: '🌱' },
         'dirt': { name: 'Dirt Tool', icon: '🟫' },
         'road': { name: 'Road Tool', icon: '🛤️' },
-        'carrot_seeds': { name: 'Carrot Seeds', icon: '🥕' },
-        'wheat_seeds': { name: 'Wheat Seeds', icon: '🌾' },
-        'tomato_seeds': { name: 'Tomato Seeds', icon: '🍅' },
         'harvest': { name: 'Harvest Tool', icon: '🔨' },
         'water': { name: 'Water Tool', icon: '💧' },
         'none': { name: 'None', icon: '❌' }
     };
+
+    // Add seed tools dynamically
+    Object.entries(seedConfigs).forEach(([cropType, config]) => {
+        const toolKey = `${cropType}_seeds`;
+        toolInfo[toolKey] = { name: `${config.name} Seeds`, icon: config.icon };
+    });
 
     return toolInfo[toolType] || { name: 'Unknown', icon: '❓' };
 }
@@ -171,21 +172,7 @@ function getToolActionPreview(toolType: ToolTypeValue, tile: any, isAccessible: 
             if (tile.type === TileType.ROAD) {
                 return 'Already road - no change';
             }
-            return 'Will convert to road';
-
-        case 'carrot_seeds':
-        case 'wheat_seeds':
-        case 'tomato_seeds':
-            if (tile.type !== TileType.DIRT) {
-                return 'Can only plant on dirt';
-            }
-            if (tile.occupation) {
-                return 'Tile is occupied';
-            }
-            const cropName = toolType.replace('_seeds', '');
-            return `Will plant ${cropName}`;
-
-        case 'harvest':
+            return 'Will convert to road'; case 'harvest':
             if (tile.occupation !== OccupationType.CROP) {
                 return 'No crops to harvest';
             }
@@ -210,6 +197,18 @@ function getToolActionPreview(toolType: ToolTypeValue, tile: any, isAccessible: 
             return 'Will water crop (+50% growth speed)';
 
         default:
+            // Check if it's a seed tool
+            if (toolType.endsWith('_seeds')) {
+                if (tile.type !== TileType.DIRT) {
+                    return 'Can only plant on dirt';
+                }
+                if (tile.occupation) {
+                    return 'Tile is occupied';
+                }
+                const cropType = toolType.replace('_seeds', '');
+                const seedConfig = getSeedConfig(cropType as any);
+                return `Will plant ${seedConfig.name}`;
+            }
             return null;
     }
 }

@@ -1,7 +1,7 @@
 import { getContext } from '../Canvas';
 
 // Draw basic tile backgrounds with different patterns
-export function drawTileBackground(centerX: number, centerY: number, size: number, type: 'grass' | 'dirt' | 'tilled'): void {
+export function drawTileBackground(centerX: number, centerY: number, size: number, type: 'grass' | 'dirt' | 'watered-dirt' | 'tilled'): void {
     const ctx = getContext();
     if (!ctx) return;
 
@@ -20,9 +20,7 @@ export function drawTileBackground(centerX: number, centerY: number, size: numbe
                 const y = centerY - halfSize + (Math.random() * size);
                 ctx.fillRect(x, y, 1, 3);
             }
-            break;
-
-        case 'dirt':
+            break; case 'dirt':
             // Draw dirt background with brown base
             ctx.fillStyle = '#8b4513';
             ctx.fillRect(centerX - halfSize, centerY - halfSize, size, size);
@@ -34,6 +32,24 @@ export function drawTileBackground(centerX: number, centerY: number, size: numbe
                 const y = centerY - halfSize + (Math.random() * size);
                 ctx.fillRect(x, y, 2, 2);
             }
+            break;
+
+        case 'watered-dirt':
+            // Draw watered dirt background with darker, richer brown
+            ctx.fillStyle = '#5d4037'; // Darker brown for watered dirt
+            ctx.fillRect(centerX - halfSize, centerY - halfSize, size, size);
+
+            // Add watered dirt texture with even darker spots and slight moisture shine
+            ctx.fillStyle = '#3e2723';
+            for (let i = 0; i < 8; i++) {
+                const x = centerX - halfSize + (Math.random() * size);
+                const y = centerY - halfSize + (Math.random() * size);
+                ctx.fillRect(x, y, 2, 2);
+            }
+
+            // Add subtle moisture highlights
+            ctx.fillStyle = 'rgba(139, 195, 230, 0.1)'; // Very subtle blue tint for moisture
+            ctx.fillRect(centerX - halfSize, centerY - halfSize, size, size);
             break;
 
         case 'tilled':
