@@ -6,6 +6,10 @@ import * as CoinSystem from '../../systems/CoinSystem';
 import { updateCoinDisplay } from '../coin';
 import { updateToolButtonStates } from '../tools/ToolsUI';
 import { SaveLoadService } from '../../services';
+import { showTooltip, removeTooltip } from '../shared/TooltipUtils';
+import { getTileTooltipInfo } from '../../utils/TileTooltipUtils';
+import { getSelectedTool } from '../tools/ToolState';
+import { ToolType } from '../tools/ToolTypes';
 
 // Event handlers for mouse dragging
 export function startDrag(e: MouseEvent): void {
@@ -119,17 +123,12 @@ function showUnlockMessage(sectionX: number, sectionY: number, cost: number): vo
 
 // Show tooltip with section unlock information
 function showSectionTooltip(sectionX: number, sectionY: number, mouseX: number, mouseY: number): void {
-    // Remove any existing tooltip
-    removeSectionTooltip();
-
     const unlockCost = CoinSystem.getSectionUnlockCost(sectionX, sectionY, gameState.grid);
     const canAfford = CoinSystem.canAffordSectionUnlock(gameState, sectionX, sectionY);
     const canUnlock = CoinSystem.canUnlockSection(gameState.grid, sectionX, sectionY);
     const unlockedCount = CoinSystem.countUnlockedSections(gameState.grid);
 
-    const tooltip = document.createElement('div');
-    tooltip.id = 'section-tooltip';
-    tooltip.innerHTML = `
+    const content = `
         <div><strong>Section (${sectionX}, ${sectionY})</strong></div>
         <div>Unlocked areas: ${unlockedCount}</div>
         <div>Unlock cost: ${unlockCost} coins</div>
@@ -139,30 +138,18 @@ function showSectionTooltip(sectionX: number, sectionY: number, mouseX: number, 
         </div>
     `;
 
-    tooltip.style.cssText = `
-        position: fixed;
-        left: ${mouseX + 10}px;
-        top: ${mouseY + 10}px;
-        background: rgba(0, 0, 0, 0.9);
-        color: white;
-        padding: 10px;
-        border-radius: 8px;
-        font-size: 12px;
-        z-index: 1001;
-        pointer-events: none;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        max-width: 200px;
-    `;
-
-    document.body.appendChild(tooltip);
+    showTooltip({
+        id: 'section-tooltip',
+        content,
+        mouseX,
+        mouseY,
+        maxWidth: 200
+    });
 }
 
 // Remove section tooltip
 function removeSectionTooltip(): void {
-    const existing = document.getElementById('section-tooltip');
-    if (existing) {
-        existing.remove();
-    }
+    removeTooltip('section-tooltip');
 }
 
 // Handle mouse move for cursor changes
@@ -183,9 +170,36 @@ export function handleMouseMove(e: MouseEvent): void {
             const canUnlock = CoinSystem.canUnlockSection(gameState.grid, lockIconCoords.sectionX, lockIconCoords.sectionY);
             canvas.style.cursor = canUnlock ? 'pointer' : 'not-allowed';
             showSectionTooltip(lockIconCoords.sectionX, lockIconCoords.sectionY, e.clientX, e.clientY);
+            removeTooltip('tile-tooltip'); // Remove tile tooltip when over lock icon
         } else {
             canvas.style.cursor = 'grab';
             removeSectionTooltip();
+
+            // Show tile tooltip if no tool is selected
+            const selectedTool = getSelectedTool();
+            if (selectedTool === ToolType.NONE) {
+                const tileCoords = screenToTileCoords(screenX, screenY);
+
+                // Check if tile coordinates are within bounds
+                if (tileCoords.x >= 0 && tileCoords.x < gameState.grid.width &&
+                    tileCoords.y >= 0 && tileCoords.y < gameState.grid.height) {
+
+                    const tooltipContent = getTileTooltipInfo(gameState.grid, tileCoords.x, tileCoords.y);
+                    if (tooltipContent) {
+                        showTooltip({
+                            id: 'tile-tooltip',
+                            content: tooltipContent,
+                            mouseX: e.clientX,
+                            mouseY: e.clientY,
+                            maxWidth: 250
+                        });
+                    }
+                } else {
+                    removeTooltip('tile-tooltip');
+                }
+            } else {
+                removeTooltip('tile-tooltip');
+            }
         }
     }
 }
@@ -193,6 +207,10 @@ export function handleMouseMove(e: MouseEvent): void {
 // Handle mouse clicks
 export function handleMouseClick(e: MouseEvent, canvas: HTMLCanvasElement): void {
     if (!gameState.isDragging) {
+        // Remove any tooltips when clicking
+        removeTooltip('tile-tooltip');
+        removeTooltip('section-tooltip');
+
         const rect = canvas.getBoundingClientRect();
         const screenX = e.clientX - rect.left;
         const screenY = e.clientY - rect.top;
@@ -214,4 +232,10 @@ export function handleMouseClick(e: MouseEvent, canvas: HTMLCanvasElement): void
             render(); // Re-render after tile interaction
         }
     }
+}
+
+// Handle mouse leave to clean up tooltips
+export function handleMouseLeave(): void {
+    removeTooltip('tile-tooltip');
+    removeTooltip('section-tooltip');
 }

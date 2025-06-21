@@ -55,6 +55,65 @@ function isWaterEffective(wateredTime: number | undefined): boolean {
     return Date.now() - wateredTime < WATER_DURATION;
 }
 
+// Public function to check if a crop is currently watered
+export function isWatered(cropData: CropData): boolean {
+    return isWaterEffective(cropData.wateredTime);
+}
+
+// Get remaining water time in milliseconds
+export function getRemainingWaterTime(cropData: CropData): number {
+    if (!cropData.wateredTime) return 0;
+    const elapsed = Date.now() - cropData.wateredTime;
+    return Math.max(0, WATER_DURATION - elapsed);
+}
+
+// Get crop growth progress as a percentage (0-1)
+export function getCropGrowthProgress(cropData: CropData): number {
+    const currentTime = Date.now();
+    const timeSincePlanted = currentTime - cropData.plantedTime;
+    const growthTimes = getCropGrowthTimes(cropData.type);
+
+    // Apply watering speed boost if tile is watered
+    const effectiveTimeSincePlanted = isWaterEffective(cropData.wateredTime) ?
+        timeSincePlanted * WATER_GROWTH_MULTIPLIER :
+        timeSincePlanted;
+
+    if (cropData.stage === CropStage.SEED) {
+        return Math.min(1, effectiveTimeSincePlanted / growthTimes.seedToGrowing);
+    } else if (cropData.stage === CropStage.GROWING) {
+        const timeInGrowingStage = effectiveTimeSincePlanted - growthTimes.seedToGrowing;
+        return Math.min(1, timeInGrowingStage / growthTimes.growingToMature);
+    }
+
+    return 1; // Mature crops are 100% complete
+}
+
+// Get remaining growth time for current stage in milliseconds
+export function getRemainingGrowthTime(cropData: CropData): number {
+    if (cropData.stage === CropStage.MATURE) return 0;
+
+    const currentTime = Date.now();
+    const timeSincePlanted = currentTime - cropData.plantedTime;
+    const growthTimes = getCropGrowthTimes(cropData.type);
+
+    // Apply watering speed boost if tile is watered
+    const effectiveTimeSincePlanted = isWaterEffective(cropData.wateredTime) ?
+        timeSincePlanted * WATER_GROWTH_MULTIPLIER :
+        timeSincePlanted;
+
+    if (cropData.stage === CropStage.SEED) {
+        const timeNeeded = growthTimes.seedToGrowing;
+        const timeRemaining = timeNeeded - effectiveTimeSincePlanted;
+        return Math.max(0, timeRemaining / (isWaterEffective(cropData.wateredTime) ? WATER_GROWTH_MULTIPLIER : 1));
+    } else if (cropData.stage === CropStage.GROWING) {
+        const timeNeeded = growthTimes.seedToGrowing + growthTimes.growingToMature;
+        const timeRemaining = timeNeeded - effectiveTimeSincePlanted;
+        return Math.max(0, timeRemaining / (isWaterEffective(cropData.wateredTime) ? WATER_GROWTH_MULTIPLIER : 1));
+    }
+
+    return 0;
+}
+
 // Get growth times for a specific crop type
 function getCropGrowthTimes(cropType: CropTypeValue): { seedToGrowing: number, growingToMature: number } {
     return {

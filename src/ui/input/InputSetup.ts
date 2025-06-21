@@ -1,4 +1,4 @@
-import { startDrag, endDrag, handleMouseMove, handleMouseClick } from './MouseHandler';
+import { startDrag, endDrag, handleMouseMove, handleMouseClick, handleMouseLeave } from './MouseHandler';
 import { handleTouchStart, handleTouchMove, handleTouchEnd } from './TouchHandler';
 import { handleZoom } from './ZoomHandler';
 
@@ -15,12 +15,13 @@ export function setupInputHandlers(canvas: HTMLCanvasElement): void {
     // Handle clicks for tile interaction and lock icons
     canvas.addEventListener('click', (e) => {
         handleMouseClick(e, canvas);
-    });
-
-    window.addEventListener('mousemove', (e) => {
+    }); window.addEventListener('mousemove', (e) => {
         handleMouseMove(e);
     });
     window.addEventListener('mouseup', endDrag);
+
+    // Clean up tooltips when mouse leaves canvas
+    canvas.addEventListener('mouseleave', handleMouseLeave);
 
     // Set up event listeners for touch (mobile)
     canvas.addEventListener('touchstart', handleTouchStart);
