@@ -51,12 +51,19 @@ function actualRender(): void {
     const startX = Math.floor(-gameState.offsetX / cachedScaledTileSize);
     const startY = Math.floor(-gameState.offsetY / cachedScaledTileSize);
     const endX = startX + Math.ceil(viewportWidth / cachedScaledTileSize) + 1;
-    const endY = startY + Math.ceil(viewportHeight / cachedScaledTileSize) + 1;
-
-    // Only render tiles that are in the visible range and within grid bounds
+    const endY = startY + Math.ceil(viewportHeight / cachedScaledTileSize) + 1;    // Only render tiles that are in the visible range and within grid bounds
     // Track if we've already drawn the home to avoid drawing it multiple times
     const homeBounds = TileSystem.getHomeBounds();
-    let homeDrawn = false; for (let x = Math.max(0, startX); x < Math.min(gameState.grid.width, endX); x++) {
+    let homeDrawn = false;
+
+    // Check if any part of the home is visible in the viewport
+    const homeVisible = homeBounds &&
+        homeBounds.startX < Math.min(gameState.grid.width, endX) &&
+        homeBounds.startX + 2 > Math.max(0, startX) &&
+        homeBounds.startY < Math.min(gameState.grid.height, endY) &&
+        homeBounds.startY + 2 > Math.max(0, startY);
+
+    for (let x = Math.max(0, startX); x < Math.min(gameState.grid.width, endX); x++) {
         for (let y = Math.max(0, startY); y < Math.min(gameState.grid.height, endY); y++) {
             const tile = TileSystem.getTile(gameState.grid, x, y);
 
@@ -66,12 +73,28 @@ function actualRender(): void {
 
                 // Special handling for home tiles
                 if (tile.occupation === TileSystem.OccupationType.HOME) {
-                    // Only draw the home once for the top-left tile of the 2x2 home
-                    if (!homeDrawn && x === homeBounds.startX && y === homeBounds.startY) {
-                        drawHome(tileX, tileY, cachedScaledTileSize);
+                    // Draw the complete home if any part is visible and we haven't drawn it yet
+                    if (!homeDrawn && homeVisible) {
+                        // Calculate the actual position of the top-left corner of the home
+                        const homeStartX = homeBounds.startX * cachedScaledTileSize + gameState.offsetX;
+                        const homeStartY = homeBounds.startY * cachedScaledTileSize + gameState.offsetY;
+                        drawHome(homeStartX, homeStartY, cachedScaledTileSize);
                         homeDrawn = true;
                     }
-                    // Skip individual tile rendering for home tiles since we draw the whole home
+
+                    // If the home isn't visible or drawn, render this tile as grass
+                    if (!homeVisible || !homeDrawn) {
+                        const grassColor = TILE_COLORS[TileSystem.TileType.GRASS];
+                        ctx.fillStyle = grassColor;
+                        ctx.fillRect(tileX, tileY, cachedScaledTileSize, cachedScaledTileSize);
+
+                        const borderColor = TILE_BORDER_COLORS[TileSystem.TileType.GRASS];
+                        ctx.strokeStyle = borderColor;
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(tileX, tileY, cachedScaledTileSize, cachedScaledTileSize);
+                    }
+
+                    // Skip normal tile rendering since we handled it above
                     continue;
                 }
 

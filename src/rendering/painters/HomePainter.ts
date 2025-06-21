@@ -1,4 +1,6 @@
 import { getContext } from '../Canvas';
+import { TILE_COLORS } from '../RenderConstants';
+import { TileType } from '../../tiles/systems/TileTypes';
 
 // Draw a home structure at specified position (for 2x2 home tiles)
 export function drawHome(startX: number, startY: number, tileSize: number): void {
@@ -6,7 +8,23 @@ export function drawHome(startX: number, startY: number, tileSize: number): void
     if (!ctx) return;
 
     const homeWidth = tileSize * 2;
-    const homeHeight = tileSize * 2;
+    const homeHeight = tileSize * 2;    // First, draw the grass background for the 2x2 area
+    ctx.fillStyle = TILE_COLORS[TileType.GRASS];
+    ctx.fillRect(startX, startY, homeWidth, homeHeight);
+
+    // Draw tile grid lines for the 2x2 area
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.1)';
+    ctx.lineWidth = 1;
+    // Vertical lines
+    ctx.beginPath();
+    ctx.moveTo(startX + tileSize, startY);
+    ctx.lineTo(startX + tileSize, startY + homeHeight);
+    ctx.stroke();
+    // Horizontal lines  
+    ctx.beginPath();
+    ctx.moveTo(startX, startY + tileSize);
+    ctx.lineTo(startX + homeWidth, startY + tileSize);
+    ctx.stroke();
 
     // Draw house base (brown rectangle)
     ctx.fillStyle = '#8B4513';

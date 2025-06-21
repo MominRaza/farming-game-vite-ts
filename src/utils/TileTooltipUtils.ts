@@ -1,9 +1,11 @@
 import { TileType, CropType, CropStage, OccupationType } from '../tiles/systems/TileTypes';
 import { getTile, isTileAccessible } from '../tiles';
 import { getCropGrowthProgress, getRemainingGrowthTime, isWatered, getRemainingWaterTime } from '../tiles/systems/CropSystem';
+import type { ToolTypeValue } from '../ui/tools/ToolTypes';
+import { getToolCost, canAfford } from '../systems/CoinSystem';
 
 // Get detailed information about a tile for tooltip display
-export function getTileTooltipInfo(grid: any, x: number, y: number): string | null {
+export function getTileTooltipInfo(grid: any, x: number, y: number, selectedTool: ToolTypeValue, currentCoins: number): string | null {
     const tile = getTile(grid, x, y);
     if (!tile) return null;
 
@@ -17,11 +19,36 @@ export function getTileTooltipInfo(grid: any, x: number, y: number): string | nu
         [TileType.DIRT]: { name: 'Dirt', icon: '🟫', desc: 'Farmable soil' },
         [TileType.ROAD]: { name: 'Road', icon: '🛤️', desc: 'Stone pathway' },
         [TileType.LOCKED]: { name: 'Locked', icon: '🔒', desc: 'Locked area' }
-    };
-
-    const tileInfo = tileTypeDisplay[tile.type];
+    }; const tileInfo = tileTypeDisplay[tile.type];
     content += `<div>${tileInfo.icon} ${tileInfo.name}</div>`;
     content += `<div style="color: #ccc; font-size: 11px;">${tileInfo.desc}</div>`;
+
+    // Selected tool information
+    if (selectedTool !== 'none') {
+        const toolDisplay = getToolDisplayInfo(selectedTool);
+        const toolCost = getToolCost(selectedTool);
+        const canAffordTool = canAfford({ coins: currentCoins }, selectedTool);
+
+        content += `<div style="margin-top: 8px; padding: 5px; border-top: 1px solid #444;">`;
+        content += `<div style="color: #ffd700;"><strong>🛠️ Selected: ${toolDisplay.name}</strong></div>`;
+
+        if (toolCost > 0) {
+            content += `<div style="color: ${canAffordTool ? '#90EE90' : '#ff6666'}; font-size: 11px;">`;
+            content += `Cost: ${toolCost} coins ${canAffordTool ? '✓' : '✗'}`;
+            content += `</div>`;
+        }
+
+        // Show what will happen when clicked
+        const actionResult = getToolActionPreview(selectedTool, tile, isAccessible);
+        if (actionResult) {
+            content += `<div style="color: #87CEEB; font-size: 11px; margin-top: 2px;">${actionResult}</div>`;
+        }
+        content += `</div>`;
+    } else {
+        content += `<div style="margin-top: 8px; padding: 5px; border-top: 1px solid #444; color: #ccc; font-size: 11px;">`;
+        content += `No tool selected - Click will do nothing`;
+        content += `</div>`;
+    }
 
     // Accessibility status
     if (!isAccessible) {
@@ -97,4 +124,92 @@ export function getTileTooltipInfo(grid: any, x: number, y: number): string | nu
     }
 
     return content;
+}
+
+// Helper function to get tool display information
+function getToolDisplayInfo(toolType: ToolTypeValue): { name: string; icon: string } {
+    const toolInfo = {
+        'grass': { name: 'Grass Tool', icon: '🌱' },
+        'dirt': { name: 'Dirt Tool', icon: '🟫' },
+        'road': { name: 'Road Tool', icon: '🛤️' },
+        'carrot_seeds': { name: 'Carrot Seeds', icon: '🥕' },
+        'wheat_seeds': { name: 'Wheat Seeds', icon: '🌾' },
+        'tomato_seeds': { name: 'Tomato Seeds', icon: '🍅' },
+        'harvest': { name: 'Harvest Tool', icon: '🔨' },
+        'water': { name: 'Water Tool', icon: '💧' },
+        'none': { name: 'None', icon: '❌' }
+    };
+
+    return toolInfo[toolType] || { name: 'Unknown', icon: '❓' };
+}
+
+// Helper function to preview what will happen when a tool is used on a tile
+function getToolActionPreview(toolType: ToolTypeValue, tile: any, isAccessible: boolean): string | null {
+    if (!isAccessible) {
+        return 'Cannot use - area is locked';
+    }
+
+    // Check if tile has a home (can't be modified)
+    if (tile.occupation === OccupationType.HOME) {
+        return 'Cannot modify - home is here';
+    }
+
+    switch (toolType) {
+        case 'grass':
+            if (tile.type === TileType.GRASS && !tile.occupation) {
+                return 'Already grass - no change';
+            }
+            return 'Will convert to grass';
+
+        case 'dirt':
+            if (tile.type === TileType.DIRT && !tile.occupation) {
+                return 'Already dirt - no change';
+            }
+            return 'Will convert to dirt';
+
+        case 'road':
+            if (tile.type === TileType.ROAD) {
+                return 'Already road - no change';
+            }
+            return 'Will convert to road';
+
+        case 'carrot_seeds':
+        case 'wheat_seeds':
+        case 'tomato_seeds':
+            if (tile.type !== TileType.DIRT) {
+                return 'Can only plant on dirt';
+            }
+            if (tile.occupation) {
+                return 'Tile is occupied';
+            }
+            const cropName = toolType.replace('_seeds', '');
+            return `Will plant ${cropName}`;
+
+        case 'harvest':
+            if (tile.occupation !== OccupationType.CROP) {
+                return 'No crops to harvest';
+            }
+            if (tile.cropData?.stage !== CropStage.MATURE) {
+                return 'Crop not ready yet';
+            }
+            return 'Will harvest mature crop';
+
+        case 'water':
+            if (tile.type !== TileType.DIRT || tile.occupation !== OccupationType.CROP) {
+                return 'Can only water crops on dirt';
+            }
+            if (!tile.cropData) {
+                return 'No crop to water';
+            }
+            if (tile.cropData.stage === CropStage.MATURE) {
+                return 'Mature crops do not need water';
+            }
+            if (isWatered(tile.cropData)) {
+                return 'Already watered';
+            }
+            return 'Will water crop (+50% growth speed)';
+
+        default:
+            return null;
+    }
 }

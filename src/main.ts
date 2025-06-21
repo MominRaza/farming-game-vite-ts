@@ -2,7 +2,6 @@ import './style.css';
 import { centerView, gameState, loadGameState } from './GameState';
 import { render, initCanvas, getCanvas, startRenderLoop } from './rendering';
 import { setupInputHandlers, setupToolsUI, setupSaveLoadUI, setupCoinDisplay, updateCoinDisplay } from './ui';
-import { setupDebugUI } from './DebugUI';
 import { SaveLoadService } from './services';
 import * as TileSystem from './tiles';
 
@@ -62,7 +61,6 @@ function startGameLoop(): void {
 // Initialize the game when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     initGame();
-    setupDebugUI();
     setupToolsUI();
     setupSaveLoadUI(gameState);
     setupCoinDisplay();

@@ -32,6 +32,5 @@ export const INPUT_CONFIG = {
 // Performance settings
 export const PERFORMANCE_CONFIG = {
     MAX_FPS: 60,
-    RENDER_THROTTLE_MS: 16, // ~60fps
-    ENABLE_DEBUG_MODE: false
+    RENDER_THROTTLE_MS: 16 // ~60fps
 } as const;

@@ -53,7 +53,6 @@ src/
 │   ├── DOMUtils.ts
 │   ├── MathUtils.ts
 │   └── index.ts
-├── DebugUI.ts        # Debug interface
 ├── GameState.ts      # Global game state
 ├── main.ts           # Application entry point
 └── style.css         # Styles

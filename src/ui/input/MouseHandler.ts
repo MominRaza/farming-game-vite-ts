@@ -9,7 +9,6 @@ import { SaveLoadService } from '../../services';
 import { showTooltip, removeTooltip } from '../shared/TooltipUtils';
 import { getTileTooltipInfo } from '../../utils/TileTooltipUtils';
 import { getSelectedTool } from '../tools/ToolState';
-import { ToolType } from '../tools/ToolTypes';
 
 // Event handlers for mouse dragging
 export function startDrag(e: MouseEvent): void {
@@ -172,30 +171,25 @@ export function handleMouseMove(e: MouseEvent): void {
             showSectionTooltip(lockIconCoords.sectionX, lockIconCoords.sectionY, e.clientX, e.clientY);
             removeTooltip('tile-tooltip'); // Remove tile tooltip when over lock icon
         } else {
-            canvas.style.cursor = 'grab';
-            removeSectionTooltip();
+            canvas.style.cursor = 'grab'; removeSectionTooltip();
 
-            // Show tile tooltip if no tool is selected
+            // Show tile tooltip for all cases
             const selectedTool = getSelectedTool();
-            if (selectedTool === ToolType.NONE) {
-                const tileCoords = screenToTileCoords(screenX, screenY);
+            const tileCoords = screenToTileCoords(screenX, screenY);
 
-                // Check if tile coordinates are within bounds
-                if (tileCoords.x >= 0 && tileCoords.x < gameState.grid.width &&
-                    tileCoords.y >= 0 && tileCoords.y < gameState.grid.height) {
+            // Check if tile coordinates are within bounds
+            if (tileCoords.x >= 0 && tileCoords.x < gameState.grid.width &&
+                tileCoords.y >= 0 && tileCoords.y < gameState.grid.height) {
 
-                    const tooltipContent = getTileTooltipInfo(gameState.grid, tileCoords.x, tileCoords.y);
-                    if (tooltipContent) {
-                        showTooltip({
-                            id: 'tile-tooltip',
-                            content: tooltipContent,
-                            mouseX: e.clientX,
-                            mouseY: e.clientY,
-                            maxWidth: 250
-                        });
-                    }
-                } else {
-                    removeTooltip('tile-tooltip');
+                const tooltipContent = getTileTooltipInfo(gameState.grid, tileCoords.x, tileCoords.y, selectedTool, gameState.coins);
+                if (tooltipContent) {
+                    showTooltip({
+                        id: 'tile-tooltip',
+                        content: tooltipContent,
+                        mouseX: e.clientX,
+                        mouseY: e.clientY,
+                        maxWidth: 280
+                    });
                 }
             } else {
                 removeTooltip('tile-tooltip');
