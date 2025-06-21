@@ -13,6 +13,7 @@ export interface SavedGameData {
         scale: number;
         offsetX: number;
         offsetY: number;
+        coins: number;
     };
 }
 
@@ -36,7 +37,8 @@ export class SaveLoadService {    /**
                     },
                     scale: gameState.scale,
                     offsetX: gameState.offsetX,
-                    offsetY: gameState.offsetY
+                    offsetY: gameState.offsetY,
+                    coins: gameState.coins
                 }
             };
 
