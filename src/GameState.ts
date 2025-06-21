@@ -19,9 +19,7 @@ export interface GameState {
 // Create initial game state
 export function createInitialState(): GameState {
     const grid = TileSystem.createGrid(GRID_SIZE, GRID_SIZE, TileSystem.TileType.GRASS);    // Place the home in the center section
-    TileSystem.placeHomeInCenterSection(grid);
-
-    return {
+    TileSystem.placeHomeInCenterSection(grid); return {
         grid,
         scale: 1, // Start at normal zoom level
         offsetX: 0,
@@ -29,7 +27,7 @@ export function createInitialState(): GameState {
         isDragging: false,
         lastMouseX: 0,
         lastMouseY: 0,
-        coins: 0 // Start with 0 coins
+        coins: 20 // Start with 20 coins to get started
     };
 }
 

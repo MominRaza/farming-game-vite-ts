@@ -4,40 +4,11 @@ import { SaveLoadService } from '../../services';
 import { gameState, loadGameState } from '../../GameState';
 import { render } from '../../rendering';
 import { updateCoinDisplay } from '../coin';
+import * as CoinSystem from '../../systems/CoinSystem';
 
 // Update tool button styles to show which is selected
 export function updateToolButtons(): void {
-    const grassBtn = document.getElementById('grass-tool-btn');
-    const dirtBtn = document.getElementById('dirt-tool-btn');
-    const roadBtn = document.getElementById('road-tool-btn');
-    const carrotBtn = document.getElementById('carrot-seeds-btn');
-    const wheatBtn = document.getElementById('wheat-seeds-btn');
-    const tomatoBtn = document.getElementById('tomato-seeds-btn');
-    const harvestBtn = document.getElementById('harvest-tool-btn');
-
-    const selectedTool = getSelectedTool();
-
-    if (grassBtn) {
-        grassBtn.className = selectedTool === ToolType.GRASS ? 'tool-btn active' : 'tool-btn';
-    }
-    if (dirtBtn) {
-        dirtBtn.className = selectedTool === ToolType.DIRT ? 'tool-btn active' : 'tool-btn';
-    }
-    if (roadBtn) {
-        roadBtn.className = selectedTool === ToolType.ROAD ? 'tool-btn active' : 'tool-btn';
-    }
-    if (carrotBtn) {
-        carrotBtn.className = selectedTool === ToolType.CARROT_SEEDS ? 'tool-btn active' : 'tool-btn';
-    }
-    if (wheatBtn) {
-        wheatBtn.className = selectedTool === ToolType.WHEAT_SEEDS ? 'tool-btn active' : 'tool-btn';
-    }
-    if (tomatoBtn) {
-        tomatoBtn.className = selectedTool === ToolType.TOMATO_SEEDS ? 'tool-btn active' : 'tool-btn';
-    }
-    if (harvestBtn) {
-        harvestBtn.className = selectedTool === ToolType.HARVEST ? 'tool-btn active' : 'tool-btn';
-    }
+    updateToolButtonStates();
 }
 
 // Setup the tools UI
@@ -68,36 +39,37 @@ export function setupToolsUI(): void {
         <div style="font-weight: bold; color: #ffd700; margin-bottom: 5px;">🛠️ Tools</div>
         <div style="display: flex; gap: 8px; align-items: center;">
             <div style="font-size: 12px; color: #aaa;">Basic:</div>
-            <button id="grass-tool-btn" class="tool-btn active" title="Grass Tool - Revert tiles back to grass (Press G)">
-                🌱 <span style="font-size: 10px; opacity: 0.7;">(G)</span>
+            <button id="grass-tool-btn" class="tool-btn active" title="Grass Tool - Revert tiles back to grass (Press G) - Cost: ${CoinSystem.getToolCost('GRASS')} coins">
+                🌱 <span style="font-size: 9px; opacity: 0.7;">(G) ${CoinSystem.getToolCost('GRASS')}💰</span>
             </button>
-            <button id="dirt-tool-btn" class="tool-btn" title="Dirt Tool - Create farmable land (Press D)">
-                🟫 <span style="font-size: 10px; opacity: 0.7;">(D)</span>
+            <button id="dirt-tool-btn" class="tool-btn" title="Dirt Tool - Create farmable land (Press D) - Cost: ${CoinSystem.getToolCost('DIRT')} coins">
+                🟫 <span style="font-size: 9px; opacity: 0.7;">(D) ${CoinSystem.getToolCost('DIRT')}💰</span>
             </button>
-            <button id="road-tool-btn" class="tool-btn" title="Road Tool - Build paths (Press R)">
-                🛤️ <span style="font-size: 10px; opacity: 0.7;">(R)</span>
+            <button id="road-tool-btn" class="tool-btn" title="Road Tool - Build paths (Press R) - Cost: ${CoinSystem.getToolCost('ROAD')} coins">
+                🛤️ <span style="font-size: 9px; opacity: 0.7;">(R) ${CoinSystem.getToolCost('ROAD')}💰</span>
             </button>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
             <div style="font-size: 12px; color: #aaa;">Seeds:</div>
-            <button id="carrot-seeds-btn" class="tool-btn" title="Carrot Seeds - Plant on dirt (Press C)">
-                🥕 <span style="font-size: 10px; opacity: 0.7;">(C)</span>
+            <button id="carrot-seeds-btn" class="tool-btn" title="Carrot Seeds - Plant on dirt (Press C) - Cost: ${CoinSystem.getToolCost('CARROT_SEEDS')} coins">
+                🥕 <span style="font-size: 9px; opacity: 0.7;">(C) ${CoinSystem.getToolCost('CARROT_SEEDS')}💰</span>
             </button>
-            <button id="wheat-seeds-btn" class="tool-btn" title="Wheat Seeds - Plant on dirt (Press W)">
-                🌾 <span style="font-size: 10px; opacity: 0.7;">(W)</span>
+            <button id="wheat-seeds-btn" class="tool-btn" title="Wheat Seeds - Plant on dirt (Press W) - Cost: ${CoinSystem.getToolCost('WHEAT_SEEDS')} coins">  
+                🌾 <span style="font-size: 9px; opacity: 0.7;">(W) ${CoinSystem.getToolCost('WHEAT_SEEDS')}💰</span>
             </button>
-            <button id="tomato-seeds-btn" class="tool-btn" title="Tomato Seeds - Plant on dirt (Press T)">
-                🍅 <span style="font-size: 10px; opacity: 0.7;">(T)</span>
+            <button id="tomato-seeds-btn" class="tool-btn" title="Tomato Seeds - Plant on dirt (Press T) - Cost: ${CoinSystem.getToolCost('TOMATO_SEEDS')} coins">
+                🍅 <span style="font-size: 9px; opacity: 0.7;">(T) ${CoinSystem.getToolCost('TOMATO_SEEDS')}💰</span>
             </button>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
             <div style="font-size: 12px; color: #aaa;">Harvest:</div>
-            <button id="harvest-tool-btn" class="tool-btn" title="Harvest Tool - Harvest mature crops (Press H)">
-                🌾✨ <span style="font-size: 10px; opacity: 0.7;">(H)</span>
+            <button id="harvest-tool-btn" class="tool-btn" title="Harvest Tool - Harvest mature crops (Press H) - FREE!">
+                🌾✨ <span style="font-size: 9px; opacity: 0.7;">(H) FREE</span>
             </button>
-        </div>        <div style="font-size: 11px; color: #ccc; text-align: center;">
+        </div>
+        <div style="font-size: 11px; color: #ccc; text-align: center;">
+            All tools cost coins except harvesting<br>
             Seeds can only be planted on dirt tiles<br>
-            Harvest tool works on mature crops<br>
             <span style="color: #ffd700;">💾 Ctrl+S: Save | 📁 Ctrl+L: Load</span>
         </div>
     `;
@@ -138,13 +110,25 @@ export function setupToolsUI(): void {
         .tool-btn.active:hover {
             background: linear-gradient(145deg, #45a049, #3d8b40);
             box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+        }        .tool-btn.disabled {
+            background: linear-gradient(145deg, #666, #555);
+            border-color: #777;
+            color: #999;
+            opacity: 0.6;
+        }
+        
+        .tool-btn.disabled:hover {
+            background: linear-gradient(145deg, #666, #555);
+            transform: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
     `;
-    document.head.appendChild(style);
-
-    // Add event listeners for tool selection
+    document.head.appendChild(style);    // Add event listeners for tool selection
     setupToolEventListeners();
     setupKeyboardShortcuts();
+
+    // Update button states based on current coins
+    updateToolButtonStates();
 
     console.log('Tools UI initialized');
 }
@@ -157,54 +141,52 @@ function setupToolEventListeners(): void {
     const carrotBtn = document.getElementById('carrot-seeds-btn');
     const wheatBtn = document.getElementById('wheat-seeds-btn');
     const tomatoBtn = document.getElementById('tomato-seeds-btn');
-    const harvestBtn = document.getElementById('harvest-tool-btn');
-
-    if (grassBtn) {
+    const harvestBtn = document.getElementById('harvest-tool-btn'); if (grassBtn) {
         grassBtn.addEventListener('click', () => {
             setSelectedTool(ToolType.GRASS);
-            updateToolButtons();
+            updateToolButtonStates();
         });
     }
 
     if (dirtBtn) {
         dirtBtn.addEventListener('click', () => {
             setSelectedTool(ToolType.DIRT);
-            updateToolButtons();
+            updateToolButtonStates();
         });
     }
 
     if (roadBtn) {
         roadBtn.addEventListener('click', () => {
             setSelectedTool(ToolType.ROAD);
-            updateToolButtons();
+            updateToolButtonStates();
         });
     }
 
     if (carrotBtn) {
         carrotBtn.addEventListener('click', () => {
             setSelectedTool(ToolType.CARROT_SEEDS);
-            updateToolButtons();
+            updateToolButtonStates();
         });
     }
 
     if (wheatBtn) {
         wheatBtn.addEventListener('click', () => {
             setSelectedTool(ToolType.WHEAT_SEEDS);
-            updateToolButtons();
+            updateToolButtonStates();
         });
     }
 
     if (tomatoBtn) {
         tomatoBtn.addEventListener('click', () => {
             setSelectedTool(ToolType.TOMATO_SEEDS);
-            updateToolButtons();
+            updateToolButtonStates();
         });
     }
 
     if (harvestBtn) {
         harvestBtn.addEventListener('click', () => {
             setSelectedTool(ToolType.HARVEST);
-            updateToolButtons();
+            updateToolButtonStates();
         });
     }
 }
@@ -238,31 +220,31 @@ function setupKeyboardShortcuts(): void {
             switch (e.key.toLowerCase()) {
                 case 'g':
                     setSelectedTool(ToolType.GRASS);
-                    updateToolButtons();
+                    updateToolButtonStates();
                     break;
                 case 'd':
                     setSelectedTool(ToolType.DIRT);
-                    updateToolButtons();
+                    updateToolButtonStates();
                     break;
                 case 'r':
                     setSelectedTool(ToolType.ROAD);
-                    updateToolButtons();
+                    updateToolButtonStates();
                     break;
                 case 'c':
                     setSelectedTool(ToolType.CARROT_SEEDS);
-                    updateToolButtons();
+                    updateToolButtonStates();
                     break;
                 case 'w':
                     setSelectedTool(ToolType.WHEAT_SEEDS);
-                    updateToolButtons();
+                    updateToolButtonStates();
                     break;
                 case 't':
                     setSelectedTool(ToolType.TOMATO_SEEDS);
-                    updateToolButtons();
+                    updateToolButtonStates();
                     break;
                 case 'h':
                     setSelectedTool(ToolType.HARVEST);
-                    updateToolButtons();
+                    updateToolButtonStates();
                     break;
             }
         }
@@ -296,4 +278,47 @@ function showSaveNotification(message: string, isSuccess: boolean): void {
             notification.parentNode.removeChild(notification);
         }
     }, 2000);
+}
+
+// Update tool button states based on coin availability
+export function updateToolButtonStates(): void {
+    const grassBtn = document.getElementById('grass-tool-btn');
+    const dirtBtn = document.getElementById('dirt-tool-btn');
+    const roadBtn = document.getElementById('road-tool-btn');
+    const carrotBtn = document.getElementById('carrot-seeds-btn');
+    const wheatBtn = document.getElementById('wheat-seeds-btn');
+    const tomatoBtn = document.getElementById('tomato-seeds-btn');
+    const harvestBtn = document.getElementById('harvest-tool-btn');
+
+    const selectedTool = getSelectedTool();
+
+    // Check affordability and update button states
+    const canAffordGrass = CoinSystem.canAfford(gameState, 'GRASS');
+    const canAffordDirt = CoinSystem.canAfford(gameState, 'DIRT');
+    const canAffordRoad = CoinSystem.canAfford(gameState, 'ROAD');
+    const canAffordCarrot = CoinSystem.canAfford(gameState, 'CARROT_SEEDS');
+    const canAffordWheat = CoinSystem.canAfford(gameState, 'WHEAT_SEEDS');
+    const canAffordTomato = CoinSystem.canAfford(gameState, 'TOMATO_SEEDS');
+
+    if (grassBtn) {
+        grassBtn.className = `tool-btn ${selectedTool === ToolType.GRASS ? 'active' : ''} ${!canAffordGrass ? 'disabled' : ''}`;
+    }
+    if (dirtBtn) {
+        dirtBtn.className = `tool-btn ${selectedTool === ToolType.DIRT ? 'active' : ''} ${!canAffordDirt ? 'disabled' : ''}`;
+    }
+    if (roadBtn) {
+        roadBtn.className = `tool-btn ${selectedTool === ToolType.ROAD ? 'active' : ''} ${!canAffordRoad ? 'disabled' : ''}`;
+    }
+    if (carrotBtn) {
+        carrotBtn.className = `tool-btn ${selectedTool === ToolType.CARROT_SEEDS ? 'active' : ''} ${!canAffordCarrot ? 'disabled' : ''}`;
+    }
+    if (wheatBtn) {
+        wheatBtn.className = `tool-btn ${selectedTool === ToolType.WHEAT_SEEDS ? 'active' : ''} ${!canAffordWheat ? 'disabled' : ''}`;
+    }
+    if (tomatoBtn) {
+        tomatoBtn.className = `tool-btn ${selectedTool === ToolType.TOMATO_SEEDS ? 'active' : ''} ${!canAffordTomato ? 'disabled' : ''}`;
+    }
+    if (harvestBtn) {
+        harvestBtn.className = selectedTool === ToolType.HARVEST ? 'tool-btn active' : 'tool-btn';
+    }
 }
