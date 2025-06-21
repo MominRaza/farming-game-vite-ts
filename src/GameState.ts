@@ -27,7 +27,7 @@ export function createInitialState(): GameState {
         isDragging: false,
         lastMouseX: 0,
         lastMouseY: 0,
-        coins: 20 // Start with 20 coins to get started
+        coins: 100 // Start with 100 coins - enough to unlock a few sections
     };
 }
 

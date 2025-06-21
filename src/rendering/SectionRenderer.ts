@@ -1,6 +1,7 @@
 import { getCanvas, getContext } from './Canvas';
 import { gameState, TILE_SIZE } from '../GameState';
 import * as TileSystem from '../tiles';
+import * as CoinSystem from '../systems/CoinSystem';
 
 let cachedScaledTileSize = TILE_SIZE;
 
@@ -67,12 +68,30 @@ export function drawLockedSections(): void {
 
                     // Draw semi-transparent overlay
                     ctx.fillStyle = 'rgba(44, 44, 44, 0.7)';
-                    ctx.fillRect(sectionScreenX, sectionScreenY, sectionPixelSize, sectionPixelSize);
-
-                    // Draw lock icon in center of section
+                    ctx.fillRect(sectionScreenX, sectionScreenY, sectionPixelSize, sectionPixelSize);                    // Draw lock icon in center of section
                     const centerX = sectionScreenX + sectionPixelSize / 2;
                     const centerY = sectionScreenY + sectionPixelSize / 2;
-                    drawLockIcon(centerX, centerY, Math.min(sectionPixelSize * 0.15, 40));
+                    const iconSize = Math.min(sectionPixelSize * 0.15, 40);
+                    
+                    drawLockIcon(centerX, centerY, iconSize);
+                    
+                    // Draw unlock cost below the lock icon
+                    const unlockCost = CoinSystem.getSectionUnlockCost(sectionX, sectionY);
+                    const canAfford = CoinSystem.canAffordSectionUnlock(gameState, sectionX, sectionY);
+                    
+                    ctx.font = `${Math.max(12, iconSize * 0.4)}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.fillStyle = canAfford ? '#ffdd44' : '#ff6666';
+                    ctx.strokeStyle = '#000000';
+                    ctx.lineWidth = 2;
+                    
+                    const costText = `${unlockCost} coins`;
+                    const textY = centerY + iconSize + 20;
+                    
+                    // Draw text outline
+                    ctx.strokeText(costText, centerX, textY);
+                    // Draw text fill
+                    ctx.fillText(costText, centerX, textY);
                 }
             }
         }

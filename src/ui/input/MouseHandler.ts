@@ -1,7 +1,11 @@
 import { gameState } from '../../GameState';
 import { render, screenToTileCoords, isOverLockIcon } from '../../rendering';
 import * as TileSystem from '../../tiles';
-import { applyToolToTile } from '../tools';
+import { applyToolToTile, showErrorMessage } from '../tools';
+import * as CoinSystem from '../../systems/CoinSystem';
+import { updateCoinDisplay } from '../coin';
+import { updateToolButtonStates } from '../tools/ToolsUI';
+import { SaveLoadService } from '../../services';
 
 // Event handlers for mouse dragging
 export function startDrag(e: MouseEvent): void {
@@ -33,19 +37,37 @@ export function endDrag(): void {
 function handleLockIconClick(sectionX: number, sectionY: number): void {
     const section = TileSystem.getSection(gameState.grid, sectionX, sectionY);
     if (section && section.isLocked) {
-        console.log(`Unlocking section at (${sectionX}, ${sectionY})`);
-        TileSystem.unlockSection(gameState.grid, sectionX, sectionY);
+        // Check if player can afford to unlock this section
+        const unlockCost = CoinSystem.getSectionUnlockCost(sectionX, sectionY);
+        
+        if (!CoinSystem.canAffordSectionUnlock(gameState, sectionX, sectionY)) {
+            showErrorMessage(`Not enough coins to unlock this area! Cost: ${unlockCost} coins.`);
+            return;
+        }
 
-        // Show a message to the user
-        showUnlockMessage(sectionX, sectionY);
+        // Spend coins to unlock
+        const result = CoinSystem.spendCoinsForUnlock(gameState, sectionX, sectionY);
+        
+        if (result.success) {
+            console.log(`Unlocking section at (${sectionX}, ${sectionY}) for ${result.cost} coins`);
+            TileSystem.unlockSection(gameState.grid, sectionX, sectionY);            // Update UI
+            updateCoinDisplay();
+            updateToolButtonStates();
+
+            // Auto-save the game
+            SaveLoadService.saveGame(gameState);
+
+            // Show a message to the user
+            showUnlockMessage(sectionX, sectionY, result.cost);
+        }
     }
 }
 
 // Show a message when a section is unlocked
-function showUnlockMessage(sectionX: number, sectionY: number): void {
+function showUnlockMessage(sectionX: number, sectionY: number, cost: number): void {
     // Create a temporary message element
     const message = document.createElement('div');
-    message.textContent = `Section (${sectionX}, ${sectionY}) unlocked!`;
+    message.textContent = `Section (${sectionX}, ${sectionY}) unlocked for ${cost} coins!`;
     message.style.cssText = `
         position: fixed;
         top: 50%;
@@ -87,6 +109,53 @@ function showUnlockMessage(sectionX: number, sectionY: number): void {
     }, 2000);
 }
 
+// Show tooltip with section unlock information
+function showSectionTooltip(sectionX: number, sectionY: number, mouseX: number, mouseY: number): void {
+    // Remove any existing tooltip
+    removeSectionTooltip();
+
+    const unlockCost = CoinSystem.getSectionUnlockCost(sectionX, sectionY);
+    const canAfford = CoinSystem.canAffordSectionUnlock(gameState, sectionX, sectionY);
+    const distance = CoinSystem.getSectionDistanceFromCenter(sectionX, sectionY);
+    
+    const tooltip = document.createElement('div');
+    tooltip.id = 'section-tooltip';
+    tooltip.innerHTML = `
+        <div><strong>Section (${sectionX}, ${sectionY})</strong></div>
+        <div>Distance from center: ${distance}</div>
+        <div>Unlock cost: ${unlockCost} coins</div>
+        <div>Your coins: ${gameState.coins}</div>
+        <div style="color: ${canAfford ? '#00dd00' : '#dd0000'}">
+            ${canAfford ? 'Click to unlock!' : 'Not enough coins!'}
+        </div>
+    `;
+    
+    tooltip.style.cssText = `
+        position: fixed;
+        left: ${mouseX + 10}px;
+        top: ${mouseY + 10}px;
+        background: rgba(0, 0, 0, 0.9);
+        color: white;
+        padding: 10px;
+        border-radius: 8px;
+        font-size: 12px;
+        z-index: 1001;
+        pointer-events: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        max-width: 200px;
+    `;
+
+    document.body.appendChild(tooltip);
+}
+
+// Remove section tooltip
+function removeSectionTooltip(): void {
+    const existing = document.getElementById('section-tooltip');
+    if (existing) {
+        existing.remove();
+    }
+}
+
 // Handle mouse move for cursor changes
 export function handleMouseMove(e: MouseEvent): void {
     if (gameState.isDragging) {
@@ -94,7 +163,7 @@ export function handleMouseMove(e: MouseEvent): void {
         return;
     }
 
-    // Check if hovering over a lock icon to change cursor
+    // Check if hovering over a lock icon to change cursor and show tooltip
     const canvas = e.target as HTMLCanvasElement;
     if (canvas) {
         const rect = canvas.getBoundingClientRect();
@@ -102,7 +171,13 @@ export function handleMouseMove(e: MouseEvent): void {
         const screenY = e.clientY - rect.top;
 
         const lockIconCoords = isOverLockIcon(screenX, screenY);
-        canvas.style.cursor = lockIconCoords ? 'pointer' : 'grab';
+        if (lockIconCoords) {
+            canvas.style.cursor = 'pointer';
+            showSectionTooltip(lockIconCoords.sectionX, lockIconCoords.sectionY, e.clientX, e.clientY);
+        } else {
+            canvas.style.cursor = 'grab';
+            removeSectionTooltip();
+        }
     }
 }
 
