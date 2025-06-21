@@ -69,9 +69,7 @@ export function drawTile(x: number, y: number, tile: TileSystem.Tile, tileSize: 
     }
 
     // Draw tile grid
-    drawTileGrid(centerX, centerY, tileSize);
-
-    // Draw crop patterns for crop tiles
+    drawTileGrid(centerX, centerY, tileSize);    // Draw crop patterns for crop tiles
     if (tile.type !== TileSystem.TileType.GRASS &&
         tile.type !== TileSystem.TileType.DIRT &&
         tile.type !== TileSystem.TileType.ROAD &&
@@ -80,4 +78,41 @@ export function drawTile(x: number, y: number, tile: TileSystem.Tile, tileSize: 
         tile.type !== TileSystem.TileType.HOME) {
         drawCropPatterns(tile.type, tileX, tileY, tileSize);
     }
+
+    // Draw watered indicator if tile is watered
+    if (tile.isWatered && tile.plantedTime && tile.growthStage !== undefined && tile.growthStage < 2) {
+        drawWaterDroplets(centerX, centerY, tileSize);
+    }
+}
+
+// Draw water droplets to indicate watered tiles
+function drawWaterDroplets(centerX: number, centerY: number, tileSize: number): void {
+    const ctx = getContext();
+    if (!ctx) return;
+
+    // Draw small blue water droplets around the tile
+    ctx.fillStyle = 'rgba(0, 150, 255, 0.8)';
+    
+    const dropletSize = Math.max(2, tileSize / 16);
+    const positions = [
+        { x: centerX - tileSize * 0.3, y: centerY - tileSize * 0.3 },
+        { x: centerX + tileSize * 0.3, y: centerY - tileSize * 0.2 },
+        { x: centerX - tileSize * 0.2, y: centerY + tileSize * 0.25 },
+        { x: centerX + tileSize * 0.25, y: centerY + tileSize * 0.3 }
+    ];
+
+    positions.forEach(pos => {
+        ctx.beginPath();
+        ctx.arc(pos.x, pos.y, dropletSize, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Add white highlight
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.arc(pos.x - dropletSize * 0.3, pos.y - dropletSize * 0.3, dropletSize * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Reset color for next droplet
+        ctx.fillStyle = 'rgba(0, 150, 255, 0.8)';
+    });
 }

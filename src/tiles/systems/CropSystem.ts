@@ -17,10 +17,47 @@ export function plantSeed(grid: Grid, x: number, y: number, seedType: TileTypeVa
 }
 
 // Growth timing constants (in milliseconds)
-export const GROWTH_TIMES = {
-    SEED_TO_GROWING: 5000,  // 5 seconds from seed to growing
-    GROWING_TO_MATURE: 10000 // 10 seconds from growing to mature
-};
+// Wheat: fastest (30s total), Carrot: medium (60s total), Tomato: slowest (90s total)
+export const CROP_GROWTH_TIMES = {
+    WHEAT: {
+        SEED_TO_GROWING: 10000,   // 10 seconds
+        GROWING_TO_MATURE: 20000  // 20 seconds (30s total)
+    },
+    CARROT: {
+        SEED_TO_GROWING: 20000,   // 20 seconds  
+        GROWING_TO_MATURE: 40000  // 40 seconds (60s total)
+    },
+    TOMATO: {
+        SEED_TO_GROWING: 30000,   // 30 seconds
+        GROWING_TO_MATURE: 60000  // 60 seconds (90s total)
+    }
+} as const;
+
+// Get growth times for a specific crop type
+function getCropGrowthTimes(cropType: TileTypeValue): { seedToGrowing: number, growingToMature: number } {
+    if (cropType === TileType.WHEAT_SEEDS || cropType === TileType.WHEAT_GROWING) {
+        return { 
+            seedToGrowing: CROP_GROWTH_TIMES.WHEAT.SEED_TO_GROWING,
+            growingToMature: CROP_GROWTH_TIMES.WHEAT.GROWING_TO_MATURE
+        };
+    } else if (cropType === TileType.CARROT_SEEDS || cropType === TileType.CARROT_GROWING) {
+        return { 
+            seedToGrowing: CROP_GROWTH_TIMES.CARROT.SEED_TO_GROWING,
+            growingToMature: CROP_GROWTH_TIMES.CARROT.GROWING_TO_MATURE
+        };
+    } else if (cropType === TileType.TOMATO_SEEDS || cropType === TileType.TOMATO_GROWING) {
+        return { 
+            seedToGrowing: CROP_GROWTH_TIMES.TOMATO.SEED_TO_GROWING,
+            growingToMature: CROP_GROWTH_TIMES.TOMATO.GROWING_TO_MATURE
+        };
+    }
+    
+    // Fallback to carrot times
+    return { 
+        seedToGrowing: CROP_GROWTH_TIMES.CARROT.SEED_TO_GROWING,
+        growingToMature: CROP_GROWTH_TIMES.CARROT.GROWING_TO_MATURE
+    };
+}
 
 // Get the next growth stage for a crop type
 function getNextGrowthStage(currentType: TileTypeValue, stage: number): TileTypeValue {
@@ -50,15 +87,21 @@ export function updateCropGrowth(grid: Grid): boolean {
     grid.tiles.forEach((tile, key) => {
         if (tile.plantedTime && tile.growthStage !== undefined) {
             const timeSincePlanted = currentTime - tile.plantedTime;
+            const growthTimes = getCropGrowthTimes(tile.type);
             let newStage = tile.growthStage;
             let newType = tile.type;
 
+            // Apply watering speed boost if tile is watered
+            const effectiveTimeSincePlanted = tile.isWatered ? 
+                Math.floor(timeSincePlanted * 1.5) : // 50% faster growth when watered
+                timeSincePlanted;
+
             // Check if it's time to advance to next growth stage
-            if (tile.growthStage === 0 && timeSincePlanted >= GROWTH_TIMES.SEED_TO_GROWING) {
+            if (tile.growthStage === 0 && effectiveTimeSincePlanted >= growthTimes.seedToGrowing) {
                 newStage = 1;
                 newType = getNextGrowthStage(tile.type, 1);
                 hasChanges = true;
-            } else if (tile.growthStage === 1 && timeSincePlanted >= GROWTH_TIMES.SEED_TO_GROWING + GROWTH_TIMES.GROWING_TO_MATURE) {
+            } else if (tile.growthStage === 1 && effectiveTimeSincePlanted >= growthTimes.seedToGrowing + growthTimes.growingToMature) {
                 newStage = 2;
                 newType = getNextGrowthStage(tile.type, 2);
                 hasChanges = true;
@@ -69,7 +112,9 @@ export function updateCropGrowth(grid: Grid): boolean {
                 grid.tiles.set(key, {
                     ...tile,
                     type: newType,
-                    growthStage: newStage
+                    growthStage: newStage,
+                    // Clear watering status when crop advances stage
+                    isWatered: newStage === 2 ? false : tile.isWatered
                 });
             }
         }
@@ -111,4 +156,49 @@ export function harvestCrop(grid: Grid, x: number, y: number): { success: boolea
     });
 
     return { success: true, cropType };
+}
+
+// Water a crop to speed up its growth
+export function waterCrop(grid: Grid, x: number, y: number): { success: boolean; message?: string } {
+    const key = positionKey(x, y);
+    const tile = grid.tiles.get(key);
+
+    if (!tile) {
+        return { success: false, message: 'No tile found' };
+    }
+
+    // Check if tile has a crop that can be watered
+    if (!tile.plantedTime || tile.growthStage === undefined) {
+        return { success: false, message: 'Nothing to water here!' };
+    }
+
+    // Check if crop is already mature
+    if (tile.growthStage === 2) {
+        return { success: false, message: 'This crop is already fully grown!' };
+    }
+
+    // Check if already watered
+    if (tile.isWatered) {
+        return { success: false, message: 'This crop is already watered!' };
+    }
+
+    // Water the crop
+    grid.tiles.set(key, {
+        ...tile,
+        isWatered: true
+    });
+
+    return { success: true, message: 'Crop watered! It will grow 50% faster.' };
+}
+
+// Check if a tile can be watered
+export function canWaterTile(grid: Grid, x: number, y: number): boolean {
+    const key = positionKey(x, y);
+    const tile = grid.tiles.get(key);
+
+    if (!tile || !tile.plantedTime || tile.growthStage === undefined) {
+        return false;
+    }
+
+    return tile.growthStage < 2 && !tile.isWatered;
 }

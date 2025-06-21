@@ -2,11 +2,14 @@ import { TileType } from '../tiles/systems/TileTypes';
 import type { TileTypeValue } from '../tiles/systems/TileTypes';
 import { CENTER_SECTION_X, CENTER_SECTION_Y } from '../tiles/systems/TileUtils';
 
-// Coin values for different crops
+// Coin values for different crops (adjusted for new growth times)
+// Wheat: fast growth (30s) = lower value
+// Carrot: medium growth (60s) = medium value  
+// Tomato: slow growth (90s) = higher value
 export const CROP_VALUES = {
-    [TileType.CARROT_MATURE]: 5,
-    [TileType.WHEAT_MATURE]: 3,
-    [TileType.TOMATO_MATURE]: 8
+    [TileType.WHEAT_MATURE]: 8,    // Increased from 3 (fast but decent value)
+    [TileType.CARROT_MATURE]: 12,  // Increased from 5 (medium growth, medium value)
+    [TileType.TOMATO_MATURE]: 20   // Increased from 8 (slow growth, high value)
 } as const;
 
 // Get coin value for a crop type
@@ -31,10 +34,11 @@ export const TOOL_COSTS = {
     GRASS: 1,
     DIRT: 2,
     ROAD: 5,
-    CARROT_SEEDS: 3,
-    WHEAT_SEEDS: 2,
-    TOMATO_SEEDS: 4,
-    HARVEST: 0 // Harvesting is free
+    WHEAT_SEEDS: 4,      // Adjusted from 2 (faster growth, slightly higher cost)
+    CARROT_SEEDS: 6,     // Adjusted from 3 (medium growth, medium cost)
+    TOMATO_SEEDS: 10,    // Adjusted from 4 (slow growth, higher cost but better return)
+    WATER: 2,            // New: small cost to water crops
+    HARVEST: 0           // Harvesting is free
 } as const;
 
 // Get cost for a tool action
@@ -60,49 +64,108 @@ export function spendCoins(gameState: { coins: number }, toolType: string): { su
     return { success: false, cost };
 }
 
-// Section unlock costs based on distance from center
-export const SECTION_UNLOCK_COSTS = {
-    DISTANCE_1: 50,  // Adjacent to center (3x3 area around center)
-    DISTANCE_2: 100, // 5x5 area (corners and edges)
+// Section unlock costs - base cost and scaling
+export const SECTION_UNLOCK_CONFIG = {
+    BASE_COST: 30,        // Starting cost for first unlock
+    COST_INCREASE: 20,    // Cost increase per unlocked section
+    ADJACENCY_BONUS: 0.8, // Multiplier for adjacent sections (20% discount)
 } as const;
 
-// Calculate the distance from center section (using Chebyshev distance)
-export function getSectionDistanceFromCenter(sectionX: number, sectionY: number): number {
-    const deltaX = Math.abs(sectionX - CENTER_SECTION_X);
-    const deltaY = Math.abs(sectionY - CENTER_SECTION_Y);
-    return Math.max(deltaX, deltaY);
+// Check if a section is adjacent (directly neighboring) to any unlocked section
+export function isSectionAdjacentToUnlocked(grid: any, targetX: number, targetY: number): boolean {
+    // Check all 4 cardinal directions + 4 diagonal directions (8-way adjacency)
+    const directions = [
+        [-1, -1], [-1, 0], [-1, 1],
+        [0, -1], [0, 1],
+        [1, -1], [1, 0], [1, 1]
+    ];
+
+    for (const [dx, dy] of directions) {
+        const checkX = targetX + dx;
+        const checkY = targetY + dy;
+
+        // Skip if out of bounds
+        if (checkX < 0 || checkX >= 5 || checkY < 0 || checkY >= 5) {
+            continue;
+        }
+
+        // Check if this adjacent section is unlocked
+        const section = grid.sections[checkX][checkY];
+        if (section && !section.isLocked) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-// Get unlock cost for a section based on its distance from center
-export function getSectionUnlockCost(sectionX: number, sectionY: number): number {
+// Count total unlocked sections (excluding center)
+export function countUnlockedSections(grid: any): number {
+    let count = 0;
+    for (let x = 0; x < 5; x++) {
+        for (let y = 0; y < 5; y++) {
+            const section = grid.sections[x][y];
+            if (section && !section.isLocked) {
+                // Don't count the center section in pricing
+                if (!(x === CENTER_SECTION_X && y === CENTER_SECTION_Y)) {
+                    count++;
+                }
+            }
+        }
+    }
+    return count;
+}
+
+// Get unlock cost for a section based on progressive pricing
+export function getSectionUnlockCost(sectionX: number, sectionY: number, grid?: any): number {
     // Center section is already unlocked, so no cost
     if (sectionX === CENTER_SECTION_X && sectionY === CENTER_SECTION_Y) {
         return 0;
     }
 
-    const distance = getSectionDistanceFromCenter(sectionX, sectionY);
-    
-    if (distance === 1) {
-        // 3x3 area around center (8 sections)
-        return SECTION_UNLOCK_COSTS.DISTANCE_1;
-    } else if (distance === 2) {
-        // 5x5 area outer ring (16 sections)
-        return SECTION_UNLOCK_COSTS.DISTANCE_2;
+    // If no grid provided, return base cost (fallback)
+    if (!grid) {
+        return SECTION_UNLOCK_CONFIG.BASE_COST;
     }
-    
-    // Should not happen in a 5x5 grid, but return a high cost as fallback
-    return SECTION_UNLOCK_COSTS.DISTANCE_2 * 2;
+
+    // Calculate progressive cost based on already unlocked sections
+    const unlockedCount = countUnlockedSections(grid);
+    let cost = SECTION_UNLOCK_CONFIG.BASE_COST + (unlockedCount * SECTION_UNLOCK_CONFIG.COST_INCREASE);
+
+    // Apply adjacency discount if section is adjacent to unlocked area
+    if (isSectionAdjacentToUnlocked(grid, sectionX, sectionY)) {
+        cost = Math.floor(cost * SECTION_UNLOCK_CONFIG.ADJACENCY_BONUS);
+    }
+
+    return Math.max(cost, SECTION_UNLOCK_CONFIG.BASE_COST); // Minimum cost
+}
+
+// Check if a section can be unlocked (must be adjacent to unlocked area)
+export function canUnlockSection(grid: any, sectionX: number, sectionY: number): boolean {
+    // Center section is always unlocked
+    if (sectionX === CENTER_SECTION_X && sectionY === CENTER_SECTION_Y) {
+        return false; // Already unlocked
+    }
+
+    // Check if section is already unlocked
+    const section = grid.sections[sectionX][sectionY];
+    if (!section || !section.isLocked) {
+        return false; // Already unlocked
+    }
+
+    // Must be adjacent to an unlocked section
+    return isSectionAdjacentToUnlocked(grid, sectionX, sectionY);
 }
 
 // Check if player can afford to unlock a section
-export function canAffordSectionUnlock(gameState: { coins: number }, sectionX: number, sectionY: number): boolean {
-    const cost = getSectionUnlockCost(sectionX, sectionY);
+export function canAffordSectionUnlock(gameState: { coins: number; grid?: any }, sectionX: number, sectionY: number): boolean {
+    const cost = getSectionUnlockCost(sectionX, sectionY, gameState.grid);
     return gameState.coins >= cost;
 }
 
 // Spend coins to unlock a section
-export function spendCoinsForUnlock(gameState: { coins: number }, sectionX: number, sectionY: number): { success: boolean; cost: number } {
-    const cost = getSectionUnlockCost(sectionX, sectionY);
+export function spendCoinsForUnlock(gameState: { coins: number; grid?: any }, sectionX: number, sectionY: number): { success: boolean; cost: number } {
+    const cost = getSectionUnlockCost(sectionX, sectionY, gameState.grid);
 
     if (gameState.coins >= cost) {
         gameState.coins -= cost;

@@ -32,6 +32,7 @@ export interface Tile {
     sectionY?: number; // Which section this tile belongs to (0-4)
     plantedTime?: number; // When the seed was planted (timestamp)
     growthStage?: number; // 0 = seed, 1 = growing, 2 = mature
+    isWatered?: boolean; // Whether this tile has been watered (speeds up growth)
 }
 
 // Interface for a section

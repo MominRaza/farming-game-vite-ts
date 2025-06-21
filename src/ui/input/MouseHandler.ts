@@ -37,9 +37,15 @@ export function endDrag(): void {
 function handleLockIconClick(sectionX: number, sectionY: number): void {
     const section = TileSystem.getSection(gameState.grid, sectionX, sectionY);
     if (section && section.isLocked) {
+        // Check if this section can be unlocked (adjacency rule)
+        if (!CoinSystem.canUnlockSection(gameState.grid, sectionX, sectionY)) {
+            showErrorMessage('This area is too far away! You can only unlock areas adjacent to your current territory.');
+            return;
+        }
+
         // Check if player can afford to unlock this section
-        const unlockCost = CoinSystem.getSectionUnlockCost(sectionX, sectionY);
-        
+        const unlockCost = CoinSystem.getSectionUnlockCost(sectionX, sectionY, gameState.grid);
+
         if (!CoinSystem.canAffordSectionUnlock(gameState, sectionX, sectionY)) {
             showErrorMessage(`Not enough coins to unlock this area! Cost: ${unlockCost} coins.`);
             return;
@@ -47,10 +53,12 @@ function handleLockIconClick(sectionX: number, sectionY: number): void {
 
         // Spend coins to unlock
         const result = CoinSystem.spendCoinsForUnlock(gameState, sectionX, sectionY);
-        
+
         if (result.success) {
             console.log(`Unlocking section at (${sectionX}, ${sectionY}) for ${result.cost} coins`);
-            TileSystem.unlockSection(gameState.grid, sectionX, sectionY);            // Update UI
+            TileSystem.unlockSection(gameState.grid, sectionX, sectionY);
+
+            // Update UI
             updateCoinDisplay();
             updateToolButtonStates();
 
@@ -114,22 +122,23 @@ function showSectionTooltip(sectionX: number, sectionY: number, mouseX: number, 
     // Remove any existing tooltip
     removeSectionTooltip();
 
-    const unlockCost = CoinSystem.getSectionUnlockCost(sectionX, sectionY);
+    const unlockCost = CoinSystem.getSectionUnlockCost(sectionX, sectionY, gameState.grid);
     const canAfford = CoinSystem.canAffordSectionUnlock(gameState, sectionX, sectionY);
-    const distance = CoinSystem.getSectionDistanceFromCenter(sectionX, sectionY);
-    
+    const canUnlock = CoinSystem.canUnlockSection(gameState.grid, sectionX, sectionY);
+    const unlockedCount = CoinSystem.countUnlockedSections(gameState.grid);
+
     const tooltip = document.createElement('div');
     tooltip.id = 'section-tooltip';
     tooltip.innerHTML = `
         <div><strong>Section (${sectionX}, ${sectionY})</strong></div>
-        <div>Distance from center: ${distance}</div>
+        <div>Unlocked areas: ${unlockedCount}</div>
         <div>Unlock cost: ${unlockCost} coins</div>
         <div>Your coins: ${gameState.coins}</div>
-        <div style="color: ${canAfford ? '#00dd00' : '#dd0000'}">
-            ${canAfford ? 'Click to unlock!' : 'Not enough coins!'}
+        <div style="color: ${!canUnlock ? '#dd6600' : canAfford ? '#00dd00' : '#dd0000'}">
+            ${!canUnlock ? 'Too far away!' : canAfford ? 'Click to unlock!' : 'Not enough coins!'}
         </div>
     `;
-    
+
     tooltip.style.cssText = `
         position: fixed;
         left: ${mouseX + 10}px;
@@ -168,11 +177,11 @@ export function handleMouseMove(e: MouseEvent): void {
     if (canvas) {
         const rect = canvas.getBoundingClientRect();
         const screenX = e.clientX - rect.left;
-        const screenY = e.clientY - rect.top;
-
-        const lockIconCoords = isOverLockIcon(screenX, screenY);
+        const screenY = e.clientY - rect.top; const lockIconCoords = isOverLockIcon(screenX, screenY);
         if (lockIconCoords) {
-            canvas.style.cursor = 'pointer';
+            // Only show pointer cursor if section can be unlocked
+            const canUnlock = CoinSystem.canUnlockSection(gameState.grid, lockIconCoords.sectionX, lockIconCoords.sectionY);
+            canvas.style.cursor = canUnlock ? 'pointer' : 'not-allowed';
             showSectionTooltip(lockIconCoords.sectionX, lockIconCoords.sectionY, e.clientX, e.clientY);
         } else {
             canvas.style.cursor = 'grab';

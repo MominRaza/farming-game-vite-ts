@@ -43,14 +43,15 @@ export function applyToolToTile(x: number, y: number): void {
     }
 
     const selectedTool = getSelectedTool();    // Apply the selected tool
-    switch (selectedTool) {        case ToolType.GRASS:
+    switch (selectedTool) {
+        case ToolType.GRASS:
             if (tile.type !== TileSystem.TileType.GRASS) {
                 // Don't allow placing grass on tiles with crops
                 if (tileHasCrops(tile.type)) {
                     showErrorMessage('Cannot place grass on tiles with crops! Harvest the crops first.');
                     return;
                 }
-                
+
                 // Check if player can afford the grass tool
                 if (!CoinSystem.canAfford(gameState, 'GRASS')) {
                     showErrorMessage(`Not enough coins! Grass costs ${CoinSystem.getToolCost('GRASS')} coins.`);
@@ -59,7 +60,7 @@ export function applyToolToTile(x: number, y: number): void {
 
                 // Spend coins for the action
                 const grassCost = CoinSystem.spendCoins(gameState, 'GRASS');
-                
+
                 TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.GRASS);
                 console.log(`Applied grass at ${x}, ${y} - Cost: ${grassCost.cost} coins`);
                 showToolFeedback(x, y, '🌱');
@@ -67,14 +68,14 @@ export function applyToolToTile(x: number, y: number): void {
                 updateToolButtonStates(); // Update button states after spending coins
                 autoSave();
             }
-            break;        case ToolType.DIRT:
+            break; case ToolType.DIRT:
             if (tile.type !== TileSystem.TileType.DIRT) {
                 // Don't allow placing dirt on tiles with crops
                 if (tileHasCrops(tile.type)) {
                     showErrorMessage('Cannot place dirt on tiles with crops! Harvest the crops first.');
                     return;
                 }
-                
+
                 // Check if player can afford the dirt tool
                 if (!CoinSystem.canAfford(gameState, 'DIRT')) {
                     showErrorMessage(`Not enough coins! Dirt costs ${CoinSystem.getToolCost('DIRT')} coins.`);
@@ -83,7 +84,7 @@ export function applyToolToTile(x: number, y: number): void {
 
                 // Spend coins for the action
                 const dirtCost = CoinSystem.spendCoins(gameState, 'DIRT');
-                
+
                 TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.DIRT);
                 console.log(`Applied dirt at ${x}, ${y} - Cost: ${dirtCost.cost} coins`);
                 showToolFeedback(x, y, '🟫');
@@ -91,14 +92,14 @@ export function applyToolToTile(x: number, y: number): void {
                 updateToolButtonStates(); // Update button states after spending coins
                 autoSave();
             }
-            break;        case ToolType.ROAD:
+            break; case ToolType.ROAD:
             if (tile.type !== TileSystem.TileType.ROAD) {
                 // Don't allow placing roads on tiles with crops
                 if (tileHasCrops(tile.type)) {
                     showErrorMessage('Cannot place roads on tiles with crops! Harvest the crops first.');
                     return;
                 }
-                
+
                 // Check if player can afford the road tool
                 if (!CoinSystem.canAfford(gameState, 'ROAD')) {
                     showErrorMessage(`Not enough coins! Road costs ${CoinSystem.getToolCost('ROAD')} coins.`);
@@ -107,7 +108,7 @@ export function applyToolToTile(x: number, y: number): void {
 
                 // Spend coins for the action
                 const roadCost = CoinSystem.spendCoins(gameState, 'ROAD');
-                
+
                 TileSystem.setTile(gameState.grid, x, y, TileSystem.TileType.ROAD);
                 console.log(`Applied road at ${x}, ${y} - Cost: ${roadCost.cost} coins`);
                 showToolFeedback(x, y, '🛤️');
@@ -172,7 +173,39 @@ export function applyToolToTile(x: number, y: number): void {
                 console.log(`Tomato seeds can only be planted on dirt! Tile at ${x}, ${y} is ${tile.type}`);
                 showErrorMessage('Tomato seeds can only be planted on dirt tiles!');
             }
-            break; case ToolType.HARVEST:
+            break;
+
+        case ToolType.WATER:
+            // Check if the tile can be watered
+            if (CropSystem.canWaterTile(gameState.grid, x, y)) {
+                // Check if player can afford watering
+                if (!CoinSystem.canAfford(gameState, 'WATER')) {
+                    showErrorMessage(`Not enough coins to water! Cost: ${CoinSystem.getToolCost('WATER')} coins.`);
+                    return;
+                }
+
+                // Spend coins and water the crop
+                const paymentResult = CoinSystem.spendCoins(gameState, 'WATER');
+                if (paymentResult.success) {
+                    const waterResult = CropSystem.waterCrop(gameState.grid, x, y);
+                    if (waterResult.success) {
+                        console.log(`Watered crop at ${x}, ${y} - Cost ${paymentResult.cost} coins`);
+                        showToolFeedback(x, y, '💧✨');
+                        
+                        // Update coin display and button states
+                        updateCoinDisplay();
+                        updateToolButtonStates();
+                        autoSave();
+                    } else {
+                        showErrorMessage(waterResult.message || 'Cannot water this tile!');
+                    }
+                }
+            } else {
+                showErrorMessage('Nothing to water here! Only growing crops can be watered.');
+            }
+            break;
+
+        case ToolType.HARVEST:
             const harvestResult = CropSystem.harvestCrop(gameState.grid, x, y);
             if (harvestResult.success) {
                 let cropEmoji = '🌾';
@@ -262,12 +295,12 @@ export function showErrorMessage(message: string): void {
 // Helper function to check if a tile has crops (seeds, growing, or mature)
 function tileHasCrops(tileType: string): boolean {
     return tileType === TileSystem.TileType.CARROT_SEEDS ||
-           tileType === TileSystem.TileType.WHEAT_SEEDS ||
-           tileType === TileSystem.TileType.TOMATO_SEEDS ||
-           tileType === TileSystem.TileType.CARROT_GROWING ||
-           tileType === TileSystem.TileType.WHEAT_GROWING ||
-           tileType === TileSystem.TileType.TOMATO_GROWING ||
-           tileType === TileSystem.TileType.CARROT_MATURE ||
-           tileType === TileSystem.TileType.WHEAT_MATURE ||
-           tileType === TileSystem.TileType.TOMATO_MATURE;
+        tileType === TileSystem.TileType.WHEAT_SEEDS ||
+        tileType === TileSystem.TileType.TOMATO_SEEDS ||
+        tileType === TileSystem.TileType.CARROT_GROWING ||
+        tileType === TileSystem.TileType.WHEAT_GROWING ||
+        tileType === TileSystem.TileType.TOMATO_GROWING ||
+        tileType === TileSystem.TileType.CARROT_MATURE ||
+        tileType === TileSystem.TileType.WHEAT_MATURE ||
+        tileType === TileSystem.TileType.TOMATO_MATURE;
 }

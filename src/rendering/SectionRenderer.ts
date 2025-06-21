@@ -72,22 +72,40 @@ export function drawLockedSections(): void {
                     const centerX = sectionScreenX + sectionPixelSize / 2;
                     const centerY = sectionScreenY + sectionPixelSize / 2;
                     const iconSize = Math.min(sectionPixelSize * 0.15, 40);
-                    
-                    drawLockIcon(centerX, centerY, iconSize);
-                    
-                    // Draw unlock cost below the lock icon
-                    const unlockCost = CoinSystem.getSectionUnlockCost(sectionX, sectionY);
+
+                    // Check if section can be unlocked (adjacency rule)
+                    const canUnlock = CoinSystem.canUnlockSection(gameState.grid, sectionX, sectionY);
+                    const unlockCost = CoinSystem.getSectionUnlockCost(sectionX, sectionY, gameState.grid);
                     const canAfford = CoinSystem.canAffordSectionUnlock(gameState, sectionX, sectionY);
-                    
+
+                    // Draw different lock icon based on availability
+                    if (canUnlock) {
+                        drawLockIcon(centerX, centerY, iconSize, canAfford);
+                    } else {
+                        drawUnavailableLockIcon(centerX, centerY, iconSize);
+                    }
+
+                    // Draw unlock cost below the lock icon
                     ctx.font = `${Math.max(12, iconSize * 0.4)}px Arial`;
                     ctx.textAlign = 'center';
-                    ctx.fillStyle = canAfford ? '#ffdd44' : '#ff6666';
+
+                    let costText = '';
+                    let textColor = '#666666';
+
+                    if (canUnlock) {
+                        costText = `${unlockCost} coins`;
+                        textColor = canAfford ? '#ffdd44' : '#ff6666';
+                    } else {
+                        costText = 'Too far';
+                        textColor = '#888888';
+                    }
+
+                    ctx.fillStyle = textColor;
                     ctx.strokeStyle = '#000000';
                     ctx.lineWidth = 2;
-                    
-                    const costText = `${unlockCost} coins`;
+
                     const textY = centerY + iconSize + 20;
-                    
+
                     // Draw text outline
                     ctx.strokeText(costText, centerX, textY);
                     // Draw text fill
@@ -99,7 +117,7 @@ export function drawLockedSections(): void {
 }
 
 // Draw a lock icon at specified position
-export function drawLockIcon(centerX: number, centerY: number, size: number): void {
+export function drawLockIcon(centerX: number, centerY: number, size: number, canAfford: boolean = true): void {
     const ctx = getContext();
     if (!ctx) return;
 
@@ -109,9 +127,10 @@ export function drawLockIcon(centerX: number, centerY: number, size: number): vo
     const lockX = centerX - lockWidth / 2;
     const lockY = centerY - lockHeight / 2 + size * 0.2;
 
-    ctx.fillStyle = '#ffdd44';
+    // Use different colors based on affordability
+    ctx.fillStyle = canAfford ? '#ffdd44' : '#ff8888';
     ctx.fillRect(lockX, lockY, lockWidth, lockHeight);
-    ctx.strokeStyle = '#cc9900';
+    ctx.strokeStyle = canAfford ? '#cc9900' : '#cc4444';
     ctx.lineWidth = 2;
     ctx.strokeRect(lockX, lockY, lockWidth, lockHeight);
 
@@ -119,18 +138,66 @@ export function drawLockIcon(centerX: number, centerY: number, size: number): vo
     const shackleRadius = size * 0.6;
     const shackleY = centerY - size * 0.3;
 
-    ctx.strokeStyle = '#cc9900';
+    ctx.strokeStyle = canAfford ? '#cc9900' : '#cc4444';
     ctx.lineWidth = 4;
     ctx.beginPath();
     ctx.arc(centerX, shackleY, shackleRadius, Math.PI, 0, false);
     ctx.stroke();
 
     // Draw keyhole
-    ctx.fillStyle = '#cc9900';
+    ctx.fillStyle = canAfford ? '#cc9900' : '#cc4444';
     ctx.beginPath();
     ctx.arc(centerX, centerY + size * 0.1, size * 0.15, 0, 2 * Math.PI);
     ctx.fill();
 
     // Keyhole slit
     ctx.fillRect(centerX - size * 0.05, centerY + size * 0.1, size * 0.1, size * 0.3);
+}
+
+// Draw an unavailable lock icon (grayed out)
+export function drawUnavailableLockIcon(centerX: number, centerY: number, size: number): void {
+    const ctx = getContext();
+    if (!ctx) return;
+
+    // Draw lock body (rectangle) - grayed out
+    const lockWidth = size * 1.2;
+    const lockHeight = size * 0.8;
+    const lockX = centerX - lockWidth / 2;
+    const lockY = centerY - lockHeight / 2 + size * 0.2;
+
+    ctx.fillStyle = '#666666';
+    ctx.fillRect(lockX, lockY, lockWidth, lockHeight);
+    ctx.strokeStyle = '#444444';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(lockX, lockY, lockWidth, lockHeight);
+
+    // Draw lock shackle (arc) - grayed out
+    const shackleRadius = size * 0.6;
+    const shackleY = centerY - size * 0.3;
+
+    ctx.strokeStyle = '#444444';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(centerX, shackleY, shackleRadius, Math.PI, 0, false);
+    ctx.stroke();
+
+    // Draw keyhole - grayed out
+    ctx.fillStyle = '#444444';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY + size * 0.1, size * 0.15, 0, 2 * Math.PI);
+    ctx.fill();
+
+    // Keyhole slit
+    ctx.fillRect(centerX - size * 0.05, centerY + size * 0.1, size * 0.1, size * 0.3);
+
+    // Draw X mark to indicate unavailable
+    ctx.strokeStyle = '#dd4444';
+    ctx.lineWidth = 3;
+    const xSize = size * 0.4;
+    ctx.beginPath();
+    ctx.moveTo(centerX - xSize, centerY - xSize);
+    ctx.lineTo(centerX + xSize, centerY + xSize);
+    ctx.moveTo(centerX + xSize, centerY - xSize);
+    ctx.lineTo(centerX - xSize, centerY + xSize);
+    ctx.stroke();
 }

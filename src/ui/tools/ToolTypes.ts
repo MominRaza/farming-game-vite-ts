@@ -6,7 +6,8 @@ export const ToolType = {
     CARROT_SEEDS: 'carrot_seeds',
     WHEAT_SEEDS: 'wheat_seeds',
     TOMATO_SEEDS: 'tomato_seeds',
-    HARVEST: 'harvest'
+    HARVEST: 'harvest',
+    WATER: 'water'
 } as const;
 
 export type ToolTypeValue = typeof ToolType[keyof typeof ToolType];
