@@ -77,3 +77,38 @@ export function updateCropGrowth(grid: Grid): boolean {
 
     return hasChanges;
 }
+
+// Check if a crop is mature and ready for harvest
+export function isCropMature(tileType: TileTypeValue): boolean {
+    return tileType === TileType.CARROT_MATURE ||
+        tileType === TileType.WHEAT_MATURE ||
+        tileType === TileType.TOMATO_MATURE;
+}
+
+// Harvest a mature crop and return it to dirt
+export function harvestCrop(grid: Grid, x: number, y: number): { success: boolean; cropType?: TileTypeValue } {
+    const key = positionKey(x, y);
+    const tile = grid.tiles.get(key);
+
+    if (!tile) {
+        return { success: false };
+    }
+
+    if (!isCropMature(tile.type)) {
+        return { success: false };
+    }
+
+    const cropType = tile.type;
+
+    // Convert back to dirt after harvest
+    grid.tiles.set(key, {
+        type: TileType.DIRT,
+        x,
+        y,
+        sectionX: tile.sectionX,
+        sectionY: tile.sectionY
+        // Remove planting-related properties
+    });
+
+    return { success: true, cropType };
+}

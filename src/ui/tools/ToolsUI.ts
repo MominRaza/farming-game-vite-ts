@@ -12,6 +12,7 @@ export function updateToolButtons(): void {
     const carrotBtn = document.getElementById('carrot-seeds-btn');
     const wheatBtn = document.getElementById('wheat-seeds-btn');
     const tomatoBtn = document.getElementById('tomato-seeds-btn');
+    const harvestBtn = document.getElementById('harvest-tool-btn');
 
     const selectedTool = getSelectedTool();
 
@@ -32,6 +33,9 @@ export function updateToolButtons(): void {
     }
     if (tomatoBtn) {
         tomatoBtn.className = selectedTool === ToolType.TOMATO_SEEDS ? 'tool-btn active' : 'tool-btn';
+    }
+    if (harvestBtn) {
+        harvestBtn.className = selectedTool === ToolType.HARVEST ? 'tool-btn active' : 'tool-btn';
     }
 }
 
@@ -59,9 +63,7 @@ export function setupToolsUI(): void {
         align-items: center;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         border: 2px solid rgba(255, 255, 255, 0.1);
-    `;
-
-    toolsDiv.innerHTML = `
+    `; toolsDiv.innerHTML = `
         <div style="font-weight: bold; color: #ffd700; margin-bottom: 5px;">🛠️ Tools</div>
         <div style="display: flex; gap: 8px; align-items: center;">
             <div style="font-size: 12px; color: #aaa;">Basic:</div>
@@ -85,9 +87,16 @@ export function setupToolsUI(): void {
             </button>
             <button id="tomato-seeds-btn" class="tool-btn" title="Tomato Seeds - Plant on dirt (Press T)">
                 🍅 <span style="font-size: 10px; opacity: 0.7;">(T)</span>
-            </button>        </div>
-        <div style="font-size: 11px; color: #ccc; text-align: center;">
+            </button>
+        </div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <div style="font-size: 12px; color: #aaa;">Harvest:</div>
+            <button id="harvest-tool-btn" class="tool-btn" title="Harvest Tool - Harvest mature crops (Press H)">
+                🌾✨ <span style="font-size: 10px; opacity: 0.7;">(H)</span>
+            </button>
+        </div>        <div style="font-size: 11px; color: #ccc; text-align: center;">
             Seeds can only be planted on dirt tiles<br>
+            Harvest tool works on mature crops<br>
             <span style="color: #ffd700;">💾 Ctrl+S: Save | 📁 Ctrl+L: Load</span>
         </div>
     `;
@@ -147,6 +156,7 @@ function setupToolEventListeners(): void {
     const carrotBtn = document.getElementById('carrot-seeds-btn');
     const wheatBtn = document.getElementById('wheat-seeds-btn');
     const tomatoBtn = document.getElementById('tomato-seeds-btn');
+    const harvestBtn = document.getElementById('harvest-tool-btn');
 
     if (grassBtn) {
         grassBtn.addEventListener('click', () => {
@@ -189,6 +199,13 @@ function setupToolEventListeners(): void {
             updateToolButtons();
         });
     }
+
+    if (harvestBtn) {
+        harvestBtn.addEventListener('click', () => {
+            setSelectedTool(ToolType.HARVEST);
+            updateToolButtons();
+        });
+    }
 }
 
 // Setup keyboard shortcuts
@@ -215,9 +232,7 @@ function setupKeyboardShortcuts(): void {
                 }
                 return;
             }
-        }
-
-        // Tool shortcuts (only if no modifier keys are pressed)
+        }        // Tool shortcuts (only if no modifier keys are pressed)
         if (!e.ctrlKey && !e.metaKey && !e.altKey) {
             switch (e.key.toLowerCase()) {
                 case 'g':
@@ -242,6 +257,10 @@ function setupKeyboardShortcuts(): void {
                     break;
                 case 't':
                     setSelectedTool(ToolType.TOMATO_SEEDS);
+                    updateToolButtons();
+                    break;
+                case 'h':
+                    setSelectedTool(ToolType.HARVEST);
                     updateToolButtons();
                     break;
             }

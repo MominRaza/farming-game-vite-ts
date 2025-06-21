@@ -3,6 +3,7 @@ import { getSelectedTool } from './ToolState';
 import { gameState } from '../../GameState';
 import { SaveLoadService } from '../../services';
 import * as TileSystem from '../../tiles';
+import * as CropSystem from '../../tiles/systems/CropSystem';
 
 // Auto-save functionality with throttling to prevent excessive saves
 let autoSaveTimeout: number | null = null;
@@ -87,8 +88,7 @@ export function applyToolToTile(x: number, y: number): void {
                 console.log(`Wheat seeds can only be planted on dirt! Tile at ${x}, ${y} is ${tile.type}`);
                 showErrorMessage('Wheat seeds can only be planted on dirt tiles!');
             }
-            break;
-        case ToolType.TOMATO_SEEDS:
+            break; case ToolType.TOMATO_SEEDS:
             if (tile.type === TileSystem.TileType.DIRT) {
                 TileSystem.plantSeed(gameState.grid, x, y, TileSystem.TileType.TOMATO_SEEDS);
                 console.log(`Planted tomato seeds at ${x}, ${y}`);
@@ -97,6 +97,31 @@ export function applyToolToTile(x: number, y: number): void {
             } else {
                 console.log(`Tomato seeds can only be planted on dirt! Tile at ${x}, ${y} is ${tile.type}`);
                 showErrorMessage('Tomato seeds can only be planted on dirt tiles!');
+            }
+            break;
+        case ToolType.HARVEST:
+            const harvestResult = CropSystem.harvestCrop(gameState.grid, x, y);
+            if (harvestResult.success) {
+                let cropEmoji = '🌾';
+                let cropName = 'crop';
+
+                if (harvestResult.cropType === TileSystem.TileType.CARROT_MATURE) {
+                    cropEmoji = '🥕';
+                    cropName = 'carrots';
+                } else if (harvestResult.cropType === TileSystem.TileType.WHEAT_MATURE) {
+                    cropEmoji = '🌾';
+                    cropName = 'wheat';
+                } else if (harvestResult.cropType === TileSystem.TileType.TOMATO_MATURE) {
+                    cropEmoji = '🍅';
+                    cropName = 'tomatoes';
+                }
+
+                console.log(`Harvested ${cropName} at ${x}, ${y}`);
+                showToolFeedback(x, y, `✨${cropEmoji}`);
+                autoSave();
+            } else {
+                console.log(`No mature crops to harvest at ${x}, ${y}`);
+                showErrorMessage('No mature crops to harvest here!');
             }
             break;
     }
