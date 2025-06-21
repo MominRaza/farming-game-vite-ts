@@ -1,7 +1,7 @@
 import './style.css';
 import { centerView, gameState, loadGameState } from './GameState';
 import { render, initCanvas, getCanvas, startRenderLoop } from './rendering';
-import { setupInputHandlers, setupToolsUI, setupSaveLoadUI } from './ui';
+import { setupInputHandlers, setupToolsUI, setupSaveLoadUI, setupCoinDisplay, updateCoinDisplay } from './ui';
 import { setupDebugUI } from './DebugUI';
 import { SaveLoadService } from './services';
 import * as TileSystem from './tiles';
@@ -15,9 +15,7 @@ function initGame(): void {
     if (!canvas) {
         console.error('Canvas not found!');
         return;
-    }
-
-    // Try to load saved game
+    }    // Try to load saved game
     const savedData = SaveLoadService.loadGame();
     if (savedData) {
         const loadedState = loadGameState(savedData.gameState);
@@ -67,5 +65,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setupDebugUI();
     setupToolsUI();
     setupSaveLoadUI(gameState);
+    setupCoinDisplay();
+
+    // Update coin display after everything is set up
+    setTimeout(() => {
+        updateCoinDisplay();
+    }, 100);
+
     startGameLoop();
 });

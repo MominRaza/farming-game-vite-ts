@@ -13,21 +13,23 @@ export interface GameState {
     isDragging: boolean;
     lastMouseX: number;
     lastMouseY: number;
+    coins: number;
 }
 
 // Create initial game state
 export function createInitialState(): GameState {
-    const grid = TileSystem.createGrid(GRID_SIZE, GRID_SIZE, TileSystem.TileType.GRASS);
+    const grid = TileSystem.createGrid(GRID_SIZE, GRID_SIZE, TileSystem.TileType.GRASS);    // Place the home in the center section
+    TileSystem.placeHomeInCenterSection(grid);
 
-    // Place the home in the center section
-    TileSystem.placeHomeInCenterSection(grid); return {
+    return {
         grid,
         scale: 1, // Start at normal zoom level
         offsetX: 0,
         offsetY: 0,
         isDragging: false,
         lastMouseX: 0,
-        lastMouseY: 0
+        lastMouseY: 0,
+        coins: 0 // Start with 0 coins
     };
 }
 
@@ -39,9 +41,7 @@ export function loadGameState(savedData: any): GameState {
         for (const [key, value] of savedData.grid.tiles) {
             tilesMap.set(key, value);
         }
-    }
-
-    return {
+    } return {
         grid: {
             width: savedData.grid?.width || GRID_SIZE,
             height: savedData.grid?.height || GRID_SIZE,
@@ -53,7 +53,8 @@ export function loadGameState(savedData: any): GameState {
         offsetY: savedData.offsetY || 0,
         isDragging: false,
         lastMouseX: 0,
-        lastMouseY: 0
+        lastMouseY: 0,
+        coins: savedData.coins || 0 // Load saved coins or start with 0
     };
 }
 

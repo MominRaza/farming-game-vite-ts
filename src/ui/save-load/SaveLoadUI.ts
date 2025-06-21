@@ -2,6 +2,7 @@ import { SaveLoadService } from '../../services';
 import type { GameState } from '../../GameState';
 import { loadGameState } from '../../GameState';
 import { render } from '../../rendering';
+import { updateCoinDisplay } from '../coin';
 
 export function setupSaveLoadUI(gameState: GameState): void {
     createSaveLoadButtons(gameState);
@@ -134,9 +135,7 @@ function setupSaveLoadEventListeners(gameState: GameState): void {
             showNotification(success ? 'Game saved successfully!' : 'Failed to save game!', success);
             updateSaveLoadUI(); // Refresh the UI to show new save info
         });
-    }
-
-    // Load game button
+    }    // Load game button
     const loadBtn = document.getElementById('load-game-btn');
     if (loadBtn) {
         loadBtn.addEventListener('click', () => {
@@ -148,6 +147,9 @@ function setupSaveLoadEventListeners(gameState: GameState): void {
 
                 // Re-render the game with loaded state
                 render();
+
+                // Update coin display with loaded coins
+                updateCoinDisplay();
 
                 showNotification('Game loaded successfully!', true);
             } else {

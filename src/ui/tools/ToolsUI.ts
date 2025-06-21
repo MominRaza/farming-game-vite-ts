@@ -3,6 +3,7 @@ import { setSelectedTool, getSelectedTool } from './ToolState';
 import { SaveLoadService } from '../../services';
 import { gameState, loadGameState } from '../../GameState';
 import { render } from '../../rendering';
+import { updateCoinDisplay } from '../coin';
 
 // Update tool button styles to show which is selected
 export function updateToolButtons(): void {
@@ -218,14 +219,14 @@ function setupKeyboardShortcuts(): void {
                 const success = SaveLoadService.saveGame(gameState);
                 showSaveNotification(success ? 'Game saved successfully!' : 'Failed to save game!', success);
                 return;
-            }
-            if (e.key.toLowerCase() === 'l') {
+            } if (e.key.toLowerCase() === 'l') {
                 e.preventDefault(); // Prevent browser location bar focus
                 const savedData = SaveLoadService.loadGame();
                 if (savedData) {
                     const loadedState = loadGameState(savedData.gameState);
                     Object.assign(gameState, loadedState);
                     render();
+                    updateCoinDisplay(); // Update coin display with loaded data
                     showSaveNotification('Game loaded successfully!', true);
                 } else {
                     showSaveNotification('No saved game found!', false);
