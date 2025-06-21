@@ -39,7 +39,7 @@ export function setupToolsUI(): void {
         <div style="font-weight: bold; color: #ffd700; margin-bottom: 5px;">🛠️ Tools</div>
         <div style="display: flex; gap: 8px; align-items: center;">
             <div style="font-size: 12px; color: #aaa;">Basic:</div>
-            <button id="grass-tool-btn" class="tool-btn active" title="Grass Tool - Revert tiles back to grass (Press G) - Cost: ${CoinSystem.getToolCost('GRASS')} coins">
+            <button id="grass-tool-btn" class="tool-btn" title="Grass Tool - Revert tiles back to grass (Press G) - Cost: ${CoinSystem.getToolCost('GRASS')} coins">
                 🌱 <span style="font-size: 9px; opacity: 0.7;">(G) ${CoinSystem.getToolCost('GRASS')}💰</span>
             </button>
             <button id="dirt-tool-btn" class="tool-btn" title="Dirt Tool - Create farmable land (Press D) - Cost: ${CoinSystem.getToolCost('DIRT')} coins">
@@ -72,7 +72,7 @@ export function setupToolsUI(): void {
             Most tools cost coins • Water speeds up crop growth by 50%<br>
             Seeds can only be planted on dirt tiles<br>
             Growth times: Wheat (30s) • Carrot (60s) • Tomato (90s)<br>
-            <span style="color: #ffd700;">💾 Ctrl+S: Save | 📁 Ctrl+L: Load</span>
+            <span style="color: #ffd700;">💾 Ctrl+S: Save | 📁 Ctrl+L: Load | ❌ ESC: Deselect Tool</span>
         </div>
     `;
 
@@ -143,57 +143,86 @@ function setupToolEventListeners(): void {
     const carrotBtn = document.getElementById('carrot-seeds-btn');
     const wheatBtn = document.getElementById('wheat-seeds-btn');
     const tomatoBtn = document.getElementById('tomato-seeds-btn');
-    const waterBtn = document.getElementById('water-tool-btn');
-    const harvestBtn = document.getElementById('harvest-tool-btn');if (grassBtn) {
+    const waterBtn = document.getElementById('water-tool-btn'); const harvestBtn = document.getElementById('harvest-tool-btn');
+
+    if (grassBtn) {
         grassBtn.addEventListener('click', () => {
-            setSelectedTool(ToolType.GRASS);
+            const currentTool = getSelectedTool();
+            if (currentTool === ToolType.GRASS) {
+                setSelectedTool(ToolType.NONE); // Unselect if already selected
+            } else {
+                setSelectedTool(ToolType.GRASS);
+            }
             updateToolButtonStates();
         });
-    }
-
-    if (dirtBtn) {
+    } if (dirtBtn) {
         dirtBtn.addEventListener('click', () => {
-            setSelectedTool(ToolType.DIRT);
+            const currentTool = getSelectedTool();
+            if (currentTool === ToolType.DIRT) {
+                setSelectedTool(ToolType.NONE); // Unselect if already selected
+            } else {
+                setSelectedTool(ToolType.DIRT);
+            }
             updateToolButtonStates();
         });
-    }
-
-    if (roadBtn) {
+    } if (roadBtn) {
         roadBtn.addEventListener('click', () => {
-            setSelectedTool(ToolType.ROAD);
+            const currentTool = getSelectedTool();
+            if (currentTool === ToolType.ROAD) {
+                setSelectedTool(ToolType.NONE); // Unselect if already selected
+            } else {
+                setSelectedTool(ToolType.ROAD);
+            }
             updateToolButtonStates();
         });
-    }
-
-    if (carrotBtn) {
+    } if (carrotBtn) {
         carrotBtn.addEventListener('click', () => {
-            setSelectedTool(ToolType.CARROT_SEEDS);
+            const currentTool = getSelectedTool();
+            if (currentTool === ToolType.CARROT_SEEDS) {
+                setSelectedTool(ToolType.NONE); // Unselect if already selected
+            } else {
+                setSelectedTool(ToolType.CARROT_SEEDS);
+            }
             updateToolButtonStates();
         });
-    }
-
-    if (wheatBtn) {
+    } if (wheatBtn) {
         wheatBtn.addEventListener('click', () => {
-            setSelectedTool(ToolType.WHEAT_SEEDS);
+            const currentTool = getSelectedTool();
+            if (currentTool === ToolType.WHEAT_SEEDS) {
+                setSelectedTool(ToolType.NONE); // Unselect if already selected
+            } else {
+                setSelectedTool(ToolType.WHEAT_SEEDS);
+            }
             updateToolButtonStates();
         });
-    }    if (tomatoBtn) {
+    } if (tomatoBtn) {
         tomatoBtn.addEventListener('click', () => {
-            setSelectedTool(ToolType.TOMATO_SEEDS);
+            const currentTool = getSelectedTool();
+            if (currentTool === ToolType.TOMATO_SEEDS) {
+                setSelectedTool(ToolType.NONE); // Unselect if already selected
+            } else {
+                setSelectedTool(ToolType.TOMATO_SEEDS);
+            }
             updateToolButtonStates();
         });
-    }
-
-    if (waterBtn) {
+    } if (waterBtn) {
         waterBtn.addEventListener('click', () => {
-            setSelectedTool(ToolType.WATER);
+            const currentTool = getSelectedTool();
+            if (currentTool === ToolType.WATER) {
+                setSelectedTool(ToolType.NONE); // Unselect if already selected
+            } else {
+                setSelectedTool(ToolType.WATER);
+            }
             updateToolButtonStates();
         });
-    }
-
-    if (harvestBtn) {
+    } if (harvestBtn) {
         harvestBtn.addEventListener('click', () => {
-            setSelectedTool(ToolType.HARVEST);
+            const currentTool = getSelectedTool();
+            if (currentTool === ToolType.HARVEST) {
+                setSelectedTool(ToolType.NONE); // Unselect if already selected
+            } else {
+                setSelectedTool(ToolType.HARVEST);
+            }
             updateToolButtonStates();
         });
     }
@@ -226,6 +255,10 @@ function setupKeyboardShortcuts(): void {
         }        // Tool shortcuts (only if no modifier keys are pressed)
         if (!e.ctrlKey && !e.metaKey && !e.altKey) {
             switch (e.key.toLowerCase()) {
+                case 'escape':
+                    setSelectedTool(ToolType.NONE);
+                    updateToolButtonStates();
+                    break;
                 case 'g':
                     setSelectedTool(ToolType.GRASS);
                     updateToolButtonStates();
@@ -245,7 +278,7 @@ function setupKeyboardShortcuts(): void {
                 case 'w':
                     setSelectedTool(ToolType.WHEAT_SEEDS);
                     updateToolButtonStates();
-                    break;                case 't':
+                    break; case 't':
                     setSelectedTool(ToolType.TOMATO_SEEDS);
                     updateToolButtonStates();
                     break;
@@ -308,10 +341,8 @@ export function updateToolButtonStates(): void {
     const canAffordGrass = CoinSystem.canAfford(gameState, 'GRASS');
     const canAffordDirt = CoinSystem.canAfford(gameState, 'DIRT');
     const canAffordRoad = CoinSystem.canAfford(gameState, 'ROAD');
-    const canAffordCarrot = CoinSystem.canAfford(gameState, 'CARROT_SEEDS');
-    const canAffordWheat = CoinSystem.canAfford(gameState, 'WHEAT_SEEDS');
-    const canAffordTomato = CoinSystem.canAfford(gameState, 'TOMATO_SEEDS');
-    const canAffordWater = CoinSystem.canAfford(gameState, 'WATER');
+    const canAffordCarrot = CoinSystem.canAfford(gameState, 'CARROT_SEEDS'); const canAffordWheat = CoinSystem.canAfford(gameState, 'WHEAT_SEEDS');
+    const canAffordTomato = CoinSystem.canAfford(gameState, 'TOMATO_SEEDS'); const canAffordWater = CoinSystem.canAfford(gameState, 'WATER');
 
     if (grassBtn) {
         grassBtn.className = `tool-btn ${selectedTool === ToolType.GRASS ? 'active' : ''} ${!canAffordGrass ? 'disabled' : ''}`;

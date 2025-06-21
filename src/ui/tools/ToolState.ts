@@ -2,7 +2,7 @@ import type { ToolTypeValue } from './ToolTypes';
 import { ToolType } from './ToolTypes';
 
 // Current selected tool state
-export let selectedTool: ToolTypeValue = ToolType.GRASS;
+export let selectedTool: ToolTypeValue = ToolType.NONE;
 
 // Set the selected tool (UI update will be handled externally)
 export function setSelectedTool(tool: ToolTypeValue): void {

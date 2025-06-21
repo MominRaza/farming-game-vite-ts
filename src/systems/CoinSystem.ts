@@ -1,5 +1,5 @@
-import { TileType } from '../tiles/systems/TileTypes';
-import type { TileTypeValue } from '../tiles/systems/TileTypes';
+import { CropType } from '../tiles/systems/TileTypes';
+import type { CropTypeValue } from '../tiles/systems/TileTypes';
 import { CENTER_SECTION_X, CENTER_SECTION_Y } from '../tiles/systems/TileUtils';
 
 // Coin values for different crops (adjusted for new growth times)
@@ -7,19 +7,39 @@ import { CENTER_SECTION_X, CENTER_SECTION_Y } from '../tiles/systems/TileUtils';
 // Carrot: medium growth (60s) = medium value  
 // Tomato: slow growth (90s) = higher value
 export const CROP_VALUES = {
-    [TileType.WHEAT_MATURE]: 8,    // Increased from 3 (fast but decent value)
-    [TileType.CARROT_MATURE]: 12,  // Increased from 5 (medium growth, medium value)
-    [TileType.TOMATO_MATURE]: 20   // Increased from 8 (slow growth, high value)
+    [CropType.WHEAT]: 8,    // Fast growth, decent value
+    [CropType.CARROT]: 12,  // Medium growth, medium value
+    [CropType.TOMATO]: 20   // Slow growth, high value
 } as const;
 
 // Get coin value for a crop type
-export function getCropValue(cropType: TileTypeValue): number {
-    return CROP_VALUES[cropType as keyof typeof CROP_VALUES] || 0;
+export function getCropValue(cropType: CropTypeValue): number {
+    return CROP_VALUES[cropType] || 0;
 }
 
 // Award coins for harvesting a crop
-export function awardCoins(gameState: { coins: number }, cropType: TileTypeValue): number {
-    const value = getCropValue(cropType);
+export function awardCoins(gameState: { coins: number }, cropType: CropTypeValue | string): number {
+    let value = 0;
+
+    if (typeof cropType === 'string') {
+        // Handle string crop types (backwards compatibility)
+        switch (cropType) {
+            case 'carrot':
+                value = CROP_VALUES[CropType.CARROT];
+                break;
+            case 'wheat':
+                value = CROP_VALUES[CropType.WHEAT];
+                break;
+            case 'tomato':
+                value = CROP_VALUES[CropType.TOMATO];
+                break;
+            default:
+                value = 0;
+        }
+    } else {
+        value = getCropValue(cropType);
+    }
+
     gameState.coins += value;
     return value;
 }

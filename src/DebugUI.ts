@@ -105,14 +105,13 @@ export function setupDebugUI(): void {
             const { sectionX, sectionY } = TileSystem.getTileSectionCoords(x, y);
             const section = TileSystem.getSection(gameState.grid, sectionX, sectionY);
             const isAccessible = TileSystem.isTileAccessible(gameState.grid, x, y);
-            const tile = TileSystem.getTile(gameState.grid, x, y);
-
-            let cropInfo = '';
-            if (tile && tile.plantedTime && tile.growthStage !== undefined) {
-                const timeSincePlanted = Date.now() - tile.plantedTime;
+            const tile = TileSystem.getTile(gameState.grid, x, y); let cropInfo = '';
+            if (tile && tile.occupation === TileSystem.OccupationType.CROP && tile.cropData) {
+                const timeSincePlanted = Date.now() - tile.cropData.plantedTime;
                 const seconds = Math.floor(timeSincePlanted / 1000);
                 const stages = ['Seed', 'Growing', 'Mature'];
-                cropInfo = `<br>Crop: ${stages[tile.growthStage]} (${seconds}s)`;
+                const waterStatus = tile.cropData.wateredTime && (Date.now() - tile.cropData.wateredTime < TileSystem.WATER_DURATION) ? ' (Watered)' : '';
+                cropInfo = `<br>Crop: ${tile.cropData.type} - ${stages[tile.cropData.stage]} (${seconds}s)${waterStatus}`;
             }
 
             debugDiv.innerHTML = `

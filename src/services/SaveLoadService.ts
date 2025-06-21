@@ -1,4 +1,5 @@
 import type { GameState } from '../GameState';
+import * as TileSystem from '../tiles';
 
 export interface SavedGameData {
     version: string;
@@ -18,7 +19,58 @@ export interface SavedGameData {
 }
 
 const SAVE_KEY = 'farming-game-save';
-const CURRENT_VERSION = '1.0.0';
+const CURRENT_VERSION = '2.0.0'; // Updated version for new tile system
+
+// Migrate old tile data to new format
+function migrateTileData(oldTile: any): any {
+    // If it's already in the new format, return as is
+    if (oldTile.occupation !== undefined || oldTile.cropData !== undefined) {
+        return oldTile;
+    }
+
+    // Handle old format tiles
+    const newTile: any = {
+        type: oldTile.type,
+        x: oldTile.x,
+        y: oldTile.y,
+        sectionX: oldTile.sectionX,
+        sectionY: oldTile.sectionY
+    };
+
+    // Convert old crop tile types to new occupation system
+    if (oldTile.type === 'home') {
+        newTile.type = TileSystem.TileType.GRASS;
+        newTile.occupation = TileSystem.OccupationType.HOME;
+    } else if (oldTile.type && oldTile.type.includes('seeds') || oldTile.type.includes('growing') || oldTile.type.includes('mature')) {
+        // This is a crop tile, convert to dirt + crop occupation
+        newTile.type = TileSystem.TileType.DIRT;
+        newTile.occupation = TileSystem.OccupationType.CROP;
+        // Determine crop type
+        let cropType: TileSystem.CropTypeValue = TileSystem.CropType.WHEAT;
+        if (oldTile.type.includes('carrot')) {
+            cropType = TileSystem.CropType.CARROT;
+        } else if (oldTile.type.includes('tomato')) {
+            cropType = TileSystem.CropType.TOMATO;
+        }
+
+        // Determine crop stage  
+        let stage: TileSystem.CropStageValue = TileSystem.CropStage.SEED;
+        if (oldTile.type.includes('growing')) {
+            stage = TileSystem.CropStage.GROWING;
+        } else if (oldTile.type.includes('mature')) {
+            stage = TileSystem.CropStage.MATURE;
+        }
+
+        newTile.cropData = {
+            type: cropType,
+            stage: stage,
+            plantedTime: oldTile.plantedTime || Date.now(),
+            wateredTime: oldTile.isWatered ? Date.now() - 30000 : undefined // Assume watered 30 seconds ago
+        };
+    }
+
+    return newTile;
+}
 
 export class SaveLoadService {    /**
      * Save the current game state to localStorage
@@ -64,12 +116,21 @@ export class SaveLoadService {    /**
                 return null;
             }
 
-            const saveData: SavedGameData = JSON.parse(jsonData);
-
-            // Validate save data version
+            const saveData: SavedGameData = JSON.parse(jsonData);            // Validate save data version and apply migrations if needed
             if (saveData.version !== CURRENT_VERSION) {
                 console.warn(`Save data version mismatch: ${saveData.version} vs ${CURRENT_VERSION}`);
-                // For now, we'll still try to load it, but in the future we might need migration logic
+                console.log('Applying migration...');
+
+                // Migrate tile data if needed
+                if (saveData.gameState.grid.tiles) {
+                    saveData.gameState.grid.tiles = saveData.gameState.grid.tiles.map(([key, tile]) => {
+                        return [key, migrateTileData(tile)];
+                    });
+                }
+
+                // Update version after migration
+                saveData.version = CURRENT_VERSION;
+                console.log('Migration completed');
             }
 
             console.log('Game loaded successfully!');

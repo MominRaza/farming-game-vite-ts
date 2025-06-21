@@ -56,9 +56,7 @@ function actualRender(): void {
     // Only render tiles that are in the visible range and within grid bounds
     // Track if we've already drawn the home to avoid drawing it multiple times
     const homeBounds = TileSystem.getHomeBounds();
-    let homeDrawn = false;
-
-    for (let x = Math.max(0, startX); x < Math.min(gameState.grid.width, endX); x++) {
+    let homeDrawn = false; for (let x = Math.max(0, startX); x < Math.min(gameState.grid.width, endX); x++) {
         for (let y = Math.max(0, startY); y < Math.min(gameState.grid.height, endY); y++) {
             const tile = TileSystem.getTile(gameState.grid, x, y);
 
@@ -67,7 +65,7 @@ function actualRender(): void {
                 const tileY = y * cachedScaledTileSize + gameState.offsetY;
 
                 // Special handling for home tiles
-                if (tile.type === TileSystem.TileType.HOME) {
+                if (tile.occupation === TileSystem.OccupationType.HOME) {
                     // Only draw the home once for the top-left tile of the 2x2 home
                     if (!homeDrawn && x === homeBounds.startX && y === homeBounds.startY) {
                         drawHome(tileX, tileY, cachedScaledTileSize);
@@ -77,28 +75,20 @@ function actualRender(): void {
                     continue;
                 }
 
-                // Fill tile background (handle fence type gracefully by treating as grass)
+                // Fill tile background based on base tile type
                 const tileColor = (TILE_COLORS as any)[tile.type] || TILE_COLORS[TileSystem.TileType.GRASS];
                 ctx.fillStyle = tileColor;
                 ctx.fillRect(tileX, tileY, cachedScaledTileSize, cachedScaledTileSize);
 
-                // Draw tile border (handle fence type gracefully by treating as grass)
+                // Draw tile border based on base tile type
                 const borderColor = (TILE_BORDER_COLORS as any)[tile.type] || TILE_BORDER_COLORS[TileSystem.TileType.GRASS];
                 ctx.strokeStyle = borderColor;
                 ctx.lineWidth = 1;
                 ctx.strokeRect(tileX, tileY, cachedScaledTileSize, cachedScaledTileSize);
 
-                // Draw crop patterns for all growth stages
-                if (tile.type === TileSystem.TileType.CARROT_SEEDS ||
-                    tile.type === TileSystem.TileType.WHEAT_SEEDS ||
-                    tile.type === TileSystem.TileType.TOMATO_SEEDS ||
-                    tile.type === TileSystem.TileType.CARROT_GROWING ||
-                    tile.type === TileSystem.TileType.WHEAT_GROWING ||
-                    tile.type === TileSystem.TileType.TOMATO_GROWING ||
-                    tile.type === TileSystem.TileType.CARROT_MATURE ||
-                    tile.type === TileSystem.TileType.WHEAT_MATURE ||
-                    tile.type === TileSystem.TileType.TOMATO_MATURE) {
-                    drawCropPatterns(tile.type, tileX, tileY, cachedScaledTileSize);
+                // Draw crop patterns if tile has crops
+                if (tile.occupation === TileSystem.OccupationType.CROP && tile.cropData) {
+                    drawCropPatterns(tile.cropData, tileX, tileY, cachedScaledTileSize);
                 }
             }
         }

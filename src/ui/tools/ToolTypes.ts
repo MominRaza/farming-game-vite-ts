@@ -1,5 +1,6 @@
 // Tool types that players can use
 export const ToolType = {
+    NONE: 'none', // No tool selected - clicking does nothing
     GRASS: 'grass',
     DIRT: 'dirt',
     ROAD: 'road',
